@@ -6546,7 +6546,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+		(property "Footprint" "head-sensor-board:TestPoint_Pad_D1.5mm_NoSilk"
 			(at 299.72 97.79 0)
 			(hide yes)
 			(show_name no)
@@ -8308,7 +8308,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+		(property "Footprint" "head-sensor-board:TestPoint_Pad_D1.5mm_NoSilk"
 			(at 382.27 97.79 0)
 			(hide yes)
 			(show_name no)
@@ -8618,7 +8618,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+		(property "Footprint" "head-sensor-board:TestPoint_Pad_D1.5mm_NoSilk"
 			(at 46.99 162.56 0)
 			(hide yes)
 			(show_name no)
@@ -8817,7 +8817,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+		(property "Footprint" "head-sensor-board:TestPoint_Pad_D1.5mm_NoSilk"
 			(at 62.23 162.56 0)
 			(hide yes)
 			(show_name no)
@@ -9016,7 +9016,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+		(property "Footprint" "head-sensor-board:TestPoint_Pad_D1.5mm_NoSilk"
 			(at 77.47 162.56 0)
 			(hide yes)
 			(show_name no)
@@ -9147,7 +9147,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+		(property "Footprint" "head-sensor-board:TestPoint_Pad_D1.5mm_NoSilk"
 			(at 92.71 162.56 0)
 			(hide yes)
 			(show_name no)
@@ -9278,7 +9278,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+		(property "Footprint" "head-sensor-board:TestPoint_Pad_D1.5mm_NoSilk"
 			(at 107.95 162.56 0)
 			(hide yes)
 			(show_name no)
@@ -9409,7 +9409,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+		(property "Footprint" "head-sensor-board:TestPoint_Pad_D1.5mm_NoSilk"
 			(at 123.19 162.56 0)
 			(hide yes)
 			(show_name no)
@@ -10931,6 +10931,84 @@
 		)
 		(uuid "5cfce78d-101b-553c-ab80-1cb8247403bd")
 	)
+	(text "H. OPERATING CAUTIONS (user, 2026-10-01)"
+		(exclude_from_sim no)
+		(at 207.86 255.9 0)
+		(effects
+			(font
+				(size 1.4 1.4)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+		(uuid "88c35d3d-d053-5c89-bb14-1d5ad1e1c11c")
+	)
+	(text "5V is a TEST OPTION only. The default is 3V3 (SJ1/SJ2 pads 1-2 bridged)."
+		(exclude_from_sim no)
+		(at 207.86 260.5 0)
+		(effects
+			(font
+				(size 1.1 1.1)
+			)
+			(justify left bottom)
+		)
+		(uuid "0ac7c72b-785e-50c2-b92c-0815b049271a")
+	)
+	(text "   The 5V total of 493 mA is right at the USB 2.0 limit of 500 mA"
+		(exclude_from_sim no)
+		(at 207.86 264.4 0)
+		(effects
+			(font
+				(size 1.1 1.1)
+			)
+			(justify left bottom)
+		)
+		(uuid "1dcd278f-3534-5ddf-97df-afad4f811083")
+	)
+	(text "   (margin 7 mA)."
+		(exclude_from_sim no)
+		(at 207.86 268.3 0)
+		(effects
+			(font
+				(size 1.1 1.1)
+			)
+			(justify left bottom)
+		)
+		(uuid "606a3a49-dfa3-52e4-9e0f-7387a186da4a")
+	)
+	(text "3V3: do NOT run Wi-Fi TX, camera capture, LEDs at 100 % and ToF peaks at"
+		(exclude_from_sim no)
+		(at 207.86 272.2 0)
+		(effects
+			(font
+				(size 1.1 1.1)
+			)
+			(justify left bottom)
+		)
+		(uuid "8f6feee8-31df-5052-8c85-fdf1693d6bc1")
+	)
+	(text "   the same time, until the real 5V input current of the XIAO has been"
+		(exclude_from_sim no)
+		(at 207.86 276.1 0)
+		(effects
+			(font
+				(size 1.1 1.1)
+			)
+			(justify left bottom)
+		)
+		(uuid "16f45e38-d8a6-5677-9ae3-f05a38b4c72a")
+	)
+	(text "   measured."
+		(exclude_from_sim no)
+		(at 207.86 280 0)
+		(effects
+			(font
+				(size 1.1 1.1)
+			)
+			(justify left bottom)
+		)
+		(uuid "6639955d-90c5-5ebc-a178-18197eae370a")
+	)
 	(text "F. GPIO assignment (approved 2026-10-01)"
 		(exclude_from_sim no)
 		(at 257.81 118.11 0)
@@ -10941,7 +11019,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "88c35d3d-d053-5c89-bb14-1d5ad1e1c11c")
+		(uuid "c6746e10-9c14-54b6-88fc-4411cffa8c81")
 	)
 	(text "D0=GPIO1 XSHUT_L | D1=GPIO2 XSHUT_R | D2=GPIO3 LED_L PWM (strapping pin, gate pulled low) | D3=GPIO4 LED_R PWM"
 		(exclude_from_sim no)
@@ -10952,7 +11030,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "0ac7c72b-785e-50c2-b92c-0815b049271a")
+		(uuid "4433b0d7-8664-5079-bdfe-46ba59e93ec9")
 	)
 	(text "D4=GPIO5 SDA | D5=GPIO6 SCL | D6/D7=GPIO43/44 reserved UART | D8/D9=GPIO7/8 = ToF GPIO1 via DNP links R15/R16 (shared with Sense"
 		(exclude_from_sim no)
@@ -10963,7 +11041,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "1dcd278f-3534-5ddf-97df-afad4f811083")
+		(uuid "a7b81826-d470-5f70-bf42-3159efe2c3ed")
 	)
 	(text "   microSD) | 5V: SJ option only"
 		(exclude_from_sim no)
@@ -10974,7 +11052,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "606a3a49-dfa3-52e4-9e0f-7387a186da4a")
+		(uuid "e7656199-6236-58d3-872f-5f9b68dc9bfb")
 	)
 	(text "Firmware: drive both XSHUT low first, release one at a time and change the VL53L1X address (default 0x29 7-bit = 0x52 8-bit)."
 		(exclude_from_sim no)
@@ -10985,7 +11063,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "8f6feee8-31df-5052-8c85-fdf1693d6bc1")
+		(uuid "b920d4b4-838f-5645-9b0f-09ac69e0ac2d")
 	)
 	(sheet_instances
 		(path "/"

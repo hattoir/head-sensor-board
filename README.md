@@ -13,21 +13,35 @@
 > J1/J2 の並び（1 VIN, 2 GND, 3 SCL, 4 SDA, 5 XSHUT, 6 GPIO1）は**仮**（PLACEHOLDER）。**現物のピン配置を確認するまで、ガーバーは出さない。**
 > ジャンパー線でつなぐので、並びが違っても基板の作り直しは要らない（線でつなぎ替える）。
 
+> ## ⚠ 電源の運用上の注意（User 指示 2026-10-01。回路図の注記 H にも同じ内容）
+> 1. **5V は試験用の選択肢で、既定は 3V3。** 5V にしたときの合計 **493 mA は USB 2.0 の 500 mA ぎりぎり**（余裕 7 mA）。XIAO の 5V ピンの電流能力は未確認。
+> 2. **3V3 は、Wi-Fi 送信・撮影・LED 100 %・ToF ピークを同時にしない運用が必要。** **実機で XIAO の 5V 入力電流を測るまで。**（Seeed の条件不明の 0.65 A を上限と見ると 3V3 の合計は 808 mA = Seeed の「700 mA」の 115 %。[docs/spec.md](docs/spec.md) §4.3）
+
 ## 進み具合
 
 | Stage | 内容 | 状態 |
 |---|---|---|
 | 1 | 仕様と部品表 | 完了（2026-10-01、承認済み） |
-| 2 | 回路図と ERC（エラー 0） | **完了・User の確認待ち**（2026-10-01。ERC 0 件、[docs/spec.md](docs/spec.md) §7） |
-| 3 | 外形と部品配置案（配置図 PNG。配線なし） | 未着手 |
+| 2 | 回路図と ERC（エラー 0） | 完了（2026-10-01、User 確認済み。ERC 0 件） |
+| 3 | 外形 40×25 mm と部品配置案（配置図 PNG。配線なし） | **完了・User の確認待ち**（2026-10-01。DRC は未配線以外 0 件。[docs/spec.md](docs/spec.md) §6・§7） |
 | 4 | 配線、DRC（エラー 0・未接続 0・回路図との不一致 0）、**ガーバー（ToF のピン配置の確認後）**、push | 未着手 |
+
+## 配置（Stage 3）
+
+![部品配置案](docs/placement_annotated.png)
+
+- **40 × 25 mm、角 R1、M2 穴 ×2**（LED の縁側の 2 つの角）。`python tools/gen_pcb.py --width W --height H` で作り直せる（KiCad 同梱の Python で実行。**この配置では 40×25 が下限で、余裕ゼロ**）。
+- **USB-C は左の縁**、**LED（D1/D2）と外付け LED ヘッダ（J3/J4）は右寄りの縁**、**ToF ヘッダ（J1/J2）は上下の長辺の縁**、TP は上面（電流の TP7/TP8 と GND は右のゾーンに 1 か所）。
+- **下半分 = L チャンネル、上半分 = R チャンネル**（上面から見て USB-C を左にしたとき）。基板上の L/R はロボットの左右とは限らない（ジャンパー線で左右は自由に決められる）。
+- XIAO の下（ソケットの内側）に、高さ 0.9 mm 以下の小さい部品を置いた。裏面は部品なし（GND ベタと配線用）。
+- KiCad の描画: [上面](docs/placement_top.png)・[裏面](docs/placement_bottom.png)。DRC: [docs/drc_report.txt](docs/drc_report.txt)
 
 ## フォルダ構成
 
 | 場所 | 中身 |
 |---|---|
 | （直下） | KiCad プロジェクト（`.kicad_pro` / `.kicad_sch` / `.kicad_pcb`、`sym-lib-table` / `fp-lib-table`） |
-| `docs/` | [spec.md](docs/spec.md)（仕様・計算・検証）、[bom.md](docs/bom.md)・`bom.csv`（部品表）、`erc_report*.txt`、回路図 PDF、`led_budget_output.txt` |
+| `docs/` | [spec.md](docs/spec.md)（仕様・計算・配置・検証）、[bom.md](docs/bom.md)・`bom.csv`（部品表）、`erc_report*.txt`・`drc_report.txt`、回路図 PDF、配置図 PNG、`led_budget_output.txt` |
 | `libs/` | 自作のシンボル・フットプリント（**KiCad 標準ライブラリに無いものだけ**。下の「ライブラリの出典」） |
 | `3dmodels/` | 3D モデル（`.step`）。まだ無い |
 | `fabrication/` | 製造データ（ガーバー、ドリル、BOM、部品配置ファイル）。Stage 4 |
@@ -52,14 +66,15 @@
 
 ## ライブラリの出典
 
-`libs/` にあるのは、KiCad 標準ライブラリに無い 5 点だけ（`python tools/gen_libs.py` で生成）。
+`libs/` にあるのは、KiCad 標準ライブラリに無い（または標準を少し変えた）6 点だけ（`python tools/gen_libs.py` で生成）。
 
 | 名前 | 種類 | 理由 | 出典 |
 |---|---|---|---|
 | `XIAO_ESP32S3` | シンボル（14 ピン。電源ピンを上下に置いた表示。ピン番号は実物のまま） | 標準ライブラリに XIAO ESP32S3 が無い | ピン配置は Seeed wiki |
 | `ToF_Header_1x06` | シンボル（ピン名つき。**並びは仮 = 未確認**） | ピン名（VIN, GND, SCL, SDA, XSHUT, GPIO1）を回路図に出すため | 自作 |
 | `Q_NMOS_GSD` | シンボル（SOT-23 の 1=G 2=S 3=D） | 標準の `Device:Q_NMOS` はピン番号が D/G/S の文字で、SOT-23 のパッド番号と合わない | 図形は KiCad 標準 `Device:Q_NMOS` を流用、ピン番号だけ数字に |
-| `XIAO_ESP32S3_THT_2x7_P2.54mm` | フットプリント（穴パターン） | 標準には表面実装用の `RF_Module:MCU_Seeed_ESP32C3` しか無く、2.54 mm の穴パターンが無い | Seeed 公式図面 p.7（行間隔 15.24 mm = 図面の 15.25 を 0.6 in に丸めた、穴 φ1.02、パッド φ1.8） |
+| `XIAO_ESP32S3_THT_2x7_P2.54mm` | フットプリント（穴パターン） | 標準には表面実装用の `RF_Module:MCU_Seeed_ESP32C3` しか無く、2.54 mm の穴パターンが無い | Seeed 公式図面 p.7（行間隔 15.24 mm = 図面の 15.25 を 0.6 in に丸めた、穴 φ1.02、パッド φ1.8）。**コートヤードはピン列の帯だけ**（XIAO の下に小さい部品を置くため。Stage 3） |
+| `TestPoint_Pad_D1.5mm_NoSilk` | フットプリント（TP） | 標準の `TestPoint:TestPoint_Pad_D1.5mm` の銀色の輪（半径 0.95 mm）が、近くに置く名前の刻印と重なるため | KiCad 標準 `TestPoint_Pad_D1.5mm` から輪だけ除いた（パッド φ1.5、コートヤード 半径 1.05）。Stage 3 |
 | `LED_Nichia_NSSW157T` | フットプリント（T 字のランド） | 標準ライブラリに同寸法のものが無い | Nichia STS-DA1-1913 p.4–5（全長 4.0、カソード 0.6+1.66、ギャップ 0.5、アノード 0.64+0.6、高さ 1.55/0.86） |
 
 3D モデルはまだ無い。
@@ -71,15 +86,17 @@ python tools/led_budget.py        # LED 電流・3V3/5V の総電流の計算（
 python tools/gen_libs.py          # 自作ライブラリ（libs/）と sym-lib-table / fp-lib-table
 python tools/gen_schematic.py     # 回路図（※KiCad で手直しした後は実行しない。手直しが消える）
 python tools/check_netlist.py     # ネットリストを期待と照合、回路図のピン番号がフットプリントのパッドに存在するか
-python tools/make_outputs.py      # ERC・PDF・BOM・BoardRepo 用 zip
+"C:/Program Files/KiCad/10.0/bin/python.exe" tools/gen_pcb.py [--width 40 --height 25 ...]
+                                  # 外形と部品配置（※KiCad 同梱の Python で実行。既存の基板を作り直す。Stage 4 で配線した後は実行しない）
+python tools/make_outputs.py      # ERC・DRC・PDF・配置図・BOM・BoardRepo 用 zip
 ```
-KiCad は `C:\Program Files\KiCad\10.0\bin\kicad-cli.exe`（PATH には入っていない）。
+KiCad は `C:\Program Files\KiCad\10.0\bin\kicad-cli.exe`（PATH には入っていない）。`tools/pcb_template.kicad_pcb` は空の基板（層・設定だけ。`gen_pcb.py` が毎回ここから作る）。
 
 ## BoardRepo について
 
 - BoardRepo は「アップロードのたびに番号つきの版ができる」方式で、閲覧・MCP は OAuth のサインインが要る（[boardrepo.com](https://boardrepo.com)）。**Agent 側からは取り込みを確認できない。User が手動でアップロードする。**
 - `snake-main-board` の GitHub リポジトリにも、BoardRepo の Webhook・チェック・コミットステータスは残っていない（確認済み）。
-- **アップロード用の束**: `C:\2026\Serpens_Home AI\head-sensor-board_upload.zip`（`tools/make_outputs.py` が作る。Git には入れない）。中身: `.gitignore`、`README.md`、`.kicad_pro`、`.kicad_sch`、`.kicad_pcb`（**Stage 2 では空**）、`sym-lib-table`、`fp-lib-table`、`libs/`（自作ライブラリ 5 点）。
+- **アップロード用の束**: `C:\2026\Serpens_Home AI\head-sensor-board_upload.zip`（`tools/make_outputs.py` が作る。Git には入れない）。中身: `.gitignore`、`README.md`、`.kicad_pro`、`.kicad_sch`、`.kicad_pcb`（**Stage 3: 外形と部品配置。配線なし**）、`sym-lib-table`、`fp-lib-table`、`libs/`（自作ライブラリ）。別フォルダに展開して、ERC 0 件・DRC は未配線のみになることを確認済み。
 - **アップロードして表示できたかは User の確認が要る。**
 
 ## 注意

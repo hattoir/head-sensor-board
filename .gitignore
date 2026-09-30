@@ -21,3 +21,6 @@ __pycache__/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# 配置図の作業用データ（gen_pcb.py が毎回作る）
+docs/placement_geometry.json

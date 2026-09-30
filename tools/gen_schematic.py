@@ -358,7 +358,7 @@ def build():
         s.label(f"SENSE_{L}", (cx + 10.16, cy + 59.69), "E")
         s.power("GND", s.pin(rs, 2))
         tp = f"TP{7 + n}"
-        s.place("Connector:TestPoint", tp, f"ILED_{L}", (cx + 25.4, cy + 66.04), 0, "TestPoint:TestPoint_Pad_D1.5mm",
+        s.place("Connector:TestPoint", tp, f"ILED_{L}", (cx + 25.4, cy + 66.04), 0, "head-sensor-board:TestPoint_Pad_D1.5mm_NoSilk",
                 fields={"MPN": "test point pad", "Notes": "LED current sense node: 1 mV = 1 mA"}, in_bom=False,
                 ref_off=(2.0, -5.0, "left"), val_off=(2.0, -2.6, "left"))
         s.stub(tp, 1, f"SENSE_{L}", 2.54)
@@ -381,7 +381,7 @@ def build():
            ("TP5", "XSHUT_L", "XSHUT_L"), ("TP6", "XSHUT_R", "XSHUT_R")]
     for i, (ref, val, net) in enumerate(tps):
         x = g(37) + i * 15.24
-        s.place("Connector:TestPoint", ref, val, (x, g(128)), 0, "TestPoint:TestPoint_Pad_D1.5mm",
+        s.place("Connector:TestPoint", ref, val, (x, g(128)), 0, "head-sensor-board:TestPoint_Pad_D1.5mm_NoSilk",
                 fields={"MPN": "test point pad", "Notes": f"Test point {val}"}, in_bom=False,
                 ref_off=(2.0, -5.0, "left"), val_off=(2.0, -2.6, "left"))
         p = s.pin(ref, 1)
@@ -455,6 +455,10 @@ def build():
             f"J3/J4 external LED: pin 1 = + (after the series resistor), pin 2 = -. Fit EITHER D1/D2 or an external LED (both = they share the current).",
             f"Do NOT short J3/J4 + to -: R1 would dissipate {short3**2*20:.2f} W (0603 = 0.1 W), R3 {short5**2*33:.2f} W (2010 = 0.5 W).",
         ]),
+        ("H. OPERATING CAUTIONS (user, 2026-10-01)", [
+            f"5V is a TEST OPTION only. The default is 3V3 (SJ1/SJ2 pads 1-2 bridged). The 5V total of {(lb.N_LED*hi5+lb.XIAO_WEBCAM_PEAK_5V)*1e3:.0f} mA is right at the USB 2.0 limit of 500 mA (margin {(0.5-(lb.N_LED*hi5+lb.XIAO_WEBCAM_PEAK_5V))*1e3:.0f} mA).",
+            "3V3: do NOT run Wi-Fi TX, camera capture, LEDs at 100 % and ToF peaks at the same time, until the real 5V input current of the XIAO has been measured.",
+        ]),
     ]
 
     def block(col, x, y, width):
@@ -470,9 +474,10 @@ def build():
         return y
 
     blk_a, blk_b, blk_c = col1
-    blk_d, blk_e, blk_f, blk_g = col2
+    blk_d, blk_e, blk_f, blk_g, blk_h = col2
     block([blk_a, blk_b, blk_c, blk_g], g(18), y0 + 8, 150)
-    block([blk_d, blk_e], g(18) + 185, y0 + 8, 100)
+    y_next = block([blk_d, blk_e], g(18) + 185, y0 + 8, 100)
+    block([blk_h], g(18) + 185, y_next, 72)            # タイトルブロック（x ≥ 300 mm、y ≥ 245 mm）にかからない幅
     block([blk_f], g(203), g(93), 130)
 
     # ------------------------------------------------------------------ 出力

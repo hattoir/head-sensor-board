@@ -7,6 +7,8 @@
   docs/erc_report.txt                     ERC（プロジェクトの設定どおり）
   docs/erc_report_strict.txt              ERC（既定で無視される 4 種の検査も有効にした厳格版）
   docs/head-sensor-board_schematic.pdf    回路図 PDF
+  docs/drc_report.txt                     DRC（回路図との対応つき）。Stage 3 は「未配線」だけが残る
+  docs/placement_top.png / _bottom.png    KiCad の描画（上面・裏面。pymupdf があれば）。注記つきの配置図は tools/gen_pcb.py が docs/placement_annotated.png を作る
   docs/bom.csv / docs/bom.md              BOM（型番・パッケージ・定格つき）
   ../../head-sensor-board_upload.zip      BoardRepo 用の束（C:/2026/Serpens_Home AI/ に置く。Git には入れない）
 """
@@ -55,6 +57,38 @@ def erc():
 def pdf():
     run(["sch", "export", "pdf", "--output", DOCS / "head-sensor-board_schematic.pdf", SCH])
     print("PDF:", (DOCS / "head-sensor-board_schematic.pdf").stat().st_size, "bytes")
+
+
+def drc():
+    """基板の DRC（回路図との対応の検査つき）。Stage 3 は配線前なので「未配線」以外が 0 であることを確かめる。"""
+    rpt = DOCS / "drc_report.txt"
+    run(["pcb", "drc", "--format", "report", "--severity-all", "--schematic-parity", "--output", rpt, ROOT / "head-sensor-board.kicad_pcb"])
+    kinds = {}
+    for line in rpt.read_text(encoding="utf-8").splitlines():
+        if line.startswith("[") and "]" in line:
+            k = line[1:line.index("]")]
+            kinds[k] = kinds.get(k, 0) + 1
+    other = {k: v for k, v in kinds.items() if k != "unconnected_items"}
+    print("DRC:", kinds or "0 violations", "| 未配線以外:", other or "0")
+    return not other
+
+
+def placement_images():
+    """KiCad 自身の描画（上面・裏面）を PNG にする。SVG → PNG に pymupdf が要る（無ければ飛ばす）。"""
+    try:
+        import pymupdf
+    except ImportError:
+        print("placement images: skipped (pip install pymupdf が必要)")
+        return
+    pcb = ROOT / "head-sensor-board.kicad_pcb"
+    for name, layers, extra in (("top", "F.Cu,F.Mask,F.SilkS,Edge.Cuts", []), ("bottom", "B.Cu,B.Mask,B.SilkS,Edge.Cuts", ["--mirror"])):
+        with tempfile.TemporaryDirectory() as d:
+            svg = pathlib.Path(d) / f"{name}.svg"
+            run(["pcb", "export", "svg", "--layers", layers, "--exclude-drawing-sheet", "--page-size-mode", "2", *extra, "--output", svg, pcb])
+            pg = pymupdf.open(str(svg))[0]
+            z = 1900 / pg.rect.width
+            pg.get_pixmap(matrix=pymupdf.Matrix(z, z), alpha=False).save(str(DOCS / f"placement_{name}.png"))
+    print("placement images: docs/placement_top.png, docs/placement_bottom.png")
 
 
 # 基板の外にある部品（回路図には出ないが、組み立てに要る）
@@ -157,6 +191,8 @@ def upload_zip():
 if __name__ == "__main__":
     ok = erc()
     pdf()
+    ok = drc() and ok
+    placement_images()
     bom()
     upload_zip()
     sys.exit(0 if ok else 1)

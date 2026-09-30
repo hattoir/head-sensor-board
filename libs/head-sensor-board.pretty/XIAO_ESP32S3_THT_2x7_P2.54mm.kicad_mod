@@ -67,8 +67,18 @@
 		)
 	)
 	(fp_rect
-		(start -9.15 -10.75)
-		(end 9.15 10.75)
+		(start -9.0 -8.9)
+		(end -6.25 8.9)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.CrtYd")
+	)
+	(fp_rect
+		(start 6.25 -8.9)
+		(end 9.0 8.9)
 		(stroke
 			(width 0.05)
 			(type solid)

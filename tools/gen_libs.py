@@ -164,7 +164,9 @@ def write_xiao_footprint():
     s += fp_rect(-8.9, -10.5, 8.9, 10.5, "F.Fab", 0.1)
     s += fp_rect(-4.5, -10.5, 4.5, -8.3, "F.Fab", 0.1)
     s += fp_poly_text("USB-C", 0, -9.3, "F.Fab", 0.8)
-    s += fp_rect(-9.15, -10.75, 9.15, 10.75, "F.CrtYd", 0.05)
+    # コートヤード = ピンソケットの 2 列の帯だけ（ソケットの内側は、XIAO の下の空間。高さ 0.9 mm 以下の 0603 / 2010 を置いてよい）
+    s += fp_rect(-9.0, -8.9, -6.25, 8.9, "F.CrtYd", 0.05)
+    s += fp_rect(6.25, -8.9, 9.0, 8.9, "F.CrtYd", 0.05)
     # パッド: 左列 1〜7（上→下）、右列 8〜14（下→上）
     pads = []
     for i in range(7):
@@ -207,6 +209,59 @@ def write_led_footprint():
     (LIBS / "head-sensor-board.pretty" / "LED_Nichia_NSSW157T.kicad_mod").write_text(s, encoding="utf-8", newline="\n")
 
 
+TP_FOOTPRINT = """(footprint "TestPoint_Pad_D1.5mm_NoSilk"
+	(version 20260206)
+	(generator "kicad-footprint-generator")
+	(layer "F.Cu")
+	(descr "SMD pad as test point, diameter 1.5 mm, no silkscreen ring (derived from KiCad TestPoint_Pad_D1.5mm)")
+	(tags "test point SMD pad")
+	(property "Reference" "REF**"
+		(at 0 -1.65 0)
+		(layer "F.SilkS")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "TestPoint_Pad_D1.5mm_NoSilk"
+		(at 0 1.75 0)
+		(layer "F.Fab")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr exclude_from_pos_files exclude_from_bom)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_circle
+		(center 0 0)
+		(end 1.05 0)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.CrtYd")
+	)
+	(pad "1" smd circle
+		(at 0 0)
+		(size 1.5 1.5)
+		(layers "F.Cu" "F.Mask")
+	)
+	(embedded_fonts no)
+)
+"""
+
+
+def write_tp_footprint():
+    # 標準の TestPoint_Pad_D1.5mm から銀色の輪（半径 0.95）だけ除いたもの。名前の刻印を近くに置けるように。
+    (LIBS / "head-sensor-board.pretty" / "TestPoint_Pad_D1.5mm_NoSilk.kicad_mod").write_text(TP_FOOTPRINT, encoding="utf-8", newline="\n")
+
+
 def write_tables():
     sym = ('(sym_lib_table\n\t(version 7)\n\t(lib\n\t\t(name "head-sensor-board")\n\t\t(type "KiCad")\n'
            '\t\t(uri "${KIPRJMOD}/libs/head-sensor-board.kicad_sym")\n\t\t(options "")\n'
@@ -223,5 +278,6 @@ if __name__ == "__main__":
     write_symbols()
     write_xiao_footprint()
     write_led_footprint()
+    write_tp_footprint()
     write_tables()
-    print("ok: libs/head-sensor-board.kicad_sym, .pretty (2 footprints), sym-lib-table, fp-lib-table")
+    print("ok: libs/head-sensor-board.kicad_sym, .pretty (3 footprints), sym-lib-table, fp-lib-table")
