@@ -1,0 +1,10 @@
+(sym_lib_table
+	(version 7)
+	(lib
+		(name "head-sensor-board")
+		(type "KiCad")
+		(uri "${KIPRJMOD}/libs/head-sensor-board.kicad_sym")
+		(options "")
+		(descr "head-sensor-board: custom symbols (XIAO ESP32S3, ToF header, Q_NMOS_GSD)")
+	)
+)

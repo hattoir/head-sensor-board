@@ -1,0 +1,10 @@
+(fp_lib_table
+	(version 7)
+	(lib
+		(name "head-sensor-board")
+		(type "KiCad")
+		(uri "${KIPRJMOD}/libs/head-sensor-board.pretty")
+		(options "")
+		(descr "head-sensor-board: custom footprints (XIAO ESP32S3 THT, NSSW157T)")
+	)
+)
