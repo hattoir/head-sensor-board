@@ -1,0 +1,23 @@
+# KiCad generated / local-only files
+*-backups/
+.history/
+fp-info-cache
+*.kicad_prl
+*.lck
+~*.lck
+_autosave-*
+*.bak
+*-bak
+*.kicad_pcb-bak
+*.kicad_sch-bak
+*-rescue.*
+*.net
+# BoardRepo 用のアップロード束（GitHub のファイルから作り直せる派生物）
+*_upload.zip
+# Python
+__pycache__/
+*.py[cod]
+# OS junk
+Thumbs.db
+desktop.ini
+.DS_Store
