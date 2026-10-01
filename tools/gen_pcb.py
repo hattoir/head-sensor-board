@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-"""Stage 3: 基板の外形と部品配置（配線なし）を作る。KiCad 同梱の Python で実行する:
+"""基板の外形・部品配置・刻印（配線なし）を作る。KiCad 同梱の Python で実行する（普通は tools/make_board.py が呼ぶ）:
 
-    "C:/Program Files/KiCad/10.0/bin/python.exe" tools/gen_pcb.py [--width 40] [--height 25] [--corner 1.0] [--hole-inset 2.4]
+    "C:/Program Files/KiCad/10.0/bin/python.exe" tools/gen_pcb.py [--width 44] [--height 28] [--corner 1.0] [--hole-inset 2.1]
 
 - 外形（Edge.Cuts）と M2 穴は、幅・高さ・角 R・穴の位置から作り直せる（変数）。
 - 部品は「左端からの距離」「右端からの距離」「中心線からの距離」で置く（placement()）。幅・高さを変えると、右の縁・上下の縁に寄せた部品は縁についてくる。
   小さくしすぎると部品が重なる → 実行後に DRC（courtyards_overlap）で確かめる。
 - 回路図（head-sensor-board.kicad_sch）から kicad-cli でネットリストを出し、フットプリントの割り当て・ネット・フィールド・回路図との対応（path）を付ける。
-- **既存の配線・部品は消して作り直す**（空の雛形 tools/pcb_template.kicad_pcb から。Stage 4 で配線した後は実行しない）。
-- 配置図 PNG（docs/placement_annotated.png）も作る（PIL。tools/render_placement.py）。
+- **既存の配線・部品は消して作り直す**（空の雛形 tools/pcb_template.kicad_pcb から）。配線は tools/route.py + tools/apply_routes.py が付け直す（make_board.py）。
+- 配置図 PNG（docs/placement_annotated.png。配線なしの図。PIL、tools/render_placement.py）は --no-render で省く（make_board.py は省く）。
 """
 import argparse
 import json
@@ -30,8 +30,8 @@ PCB = ROOT / "head-sensor-board.kicad_pcb"
 _out = None
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--width", type=float, default=40.0)
-ap.add_argument("--height", type=float, default=25.0)
+ap.add_argument("--width", type=float, default=44.0)
+ap.add_argument("--height", type=float, default=28.0)
 ap.add_argument("--corner", type=float, default=1.0, help="角 R [mm]")
 ap.add_argument("--hole-inset", type=float, default=2.1, help="M2 穴の中心から縁までの距離 [mm]")
 ap.add_argument("--xiao-inset", type=float, default=0.6, help="XIAO の USB-C 側の端と基板の左端の距離 [mm]（銀色の枠が縁にかからないように）")
@@ -69,26 +69,29 @@ def placement():
     # --- M2 穴: 右の 2 つの角（LED の縁側）。左の角は XIAO のピン列の帯と重なるので使わない
     p["H1"] = dict(x=W - HI, y=HI, rot=0)
     p["H2"] = dict(x=W - HI, y=H - HI, rot=0)
-    # --- ToF ヘッダ: 上下の長辺の縁（ジャンパー線を縁から出す）。pin1 が左
-    p["J1"] = dict(x=14.4, y=H - 1.7, rot=90)
-    p["J2"] = dict(x=14.4, y=1.7, rot=90)
+    # --- ToF ヘッダ: 上下の長辺の縁（ジャンパー線を縁から出す）。180° 回して pin1 を右にする
+    #     （XIAO の SDA（D4）が SCL（D5）の左にあるのと、ヘッダの SDA が SCL の左にある向きをそろえて、配線を交差させない）。
+    #     ピンの x は XIAO のピン列と同じ 2.54 mm の格子に乗せる（col(7) = 21.26 の 1 つ右 = col(8)）
+    p["J1"] = dict(x=col(8), y=H - 1.7, rot=270)
+    p["J2"] = dict(x=col(8), y=1.7, rot=270)
     # --- LED: 右の縁（LED の縁）。外付け LED ヘッダ J3/J4: 上下の長辺の縁の右寄り（pin1 = +、pin2 = −。左から右）
-    p["D1"] = dict(x=W - 3.0, y=YC + 5.1, rot=0)          # 左がカソード、右がアノード
+    #     L チャンネル（下半分）の流れ: 3V3 → R1 → SJ1 の pad1、5V → R3 → SJ1 の pad3、pad2 → LED のアノード
+    p["D1"] = dict(x=W - 3.0, y=YC + 5.6, rot=0)          # 左がカソード、右がアノード
     p["J3"] = dict(x=W - 9.3, y=H - 1.7, rot=90)
-    p["Q1"] = dict(x=W - 7.4, y=YC + 3.0, rot=0)
-    p["R9"] = dict(x=W - 8.4, y=YC + 6.3, rot=270)
-    p["SJ1"] = dict(x=W - 12.4, y=YC + 7.1, rot=0)
-    p["R1"] = dict(x=W - 16.6, y=YC + 7.1, rot=0)
-    p["TP7"] = dict(x=W - 11.8, y=YC + 2.6, rot=0)
+    p["Q1"] = dict(x=W - 7.6, y=YC + 3.6, rot=0)
+    p["R9"] = dict(x=W - 8.6, y=YC + 7.0, rot=270)
+    p["SJ1"] = dict(x=W - 12.8, y=YC + 7.0, rot=270)      # 縦並び（pad1 が上、pad3 が下）。pad2 は右へ出る
+    p["R1"] = dict(x=W - 17.4, y=YC + 5.7, rot=0)
+    p["TP7"] = dict(x=W - 12.2, y=YC + 2.6, rot=0)
     for a, b in (("D2", "D1"), ("J4", "J3"), ("Q2", "Q1"), ("R10", "R9"), ("SJ2", "SJ1"), ("R2", "R1"), ("TP8", "TP7")):
         q = dict(p[b])
         q["y"] = mirror(q["y"])
         q["rot"] = q["rot"] if a == "J4" else (-q["rot"]) % 360      # ヘッダは向きをそろえる（pin1 が左）
         p[a] = q
-    p["TP2"] = dict(x=W - 11.8, y=YC, rot=0)             # GND: ILED の TP（TP7 / TP8）のすぐ隣
+    p["TP2"] = dict(x=W - 12.2, y=YC, rot=0)             # GND: ILED の TP（TP7 / TP8）のすぐ隣
     # --- XIAO の下（ソケットの内側。高さ 0.9 mm 以下の 0603 / 2010 だけ）
-    p["R3"] = dict(x=XO + 3.6, y=YC - 4.2, rot=0)
-    p["R4"] = dict(x=XO + 3.6, y=YC - 0.7, rot=0)
+    p["R4"] = dict(x=XO + 3.6, y=YC - 3.9, rot=0)         # 5V の 33 Ω（R チャンネル = 上）
+    p["R3"] = dict(x=XO + 3.6, y=YC + 0.5, rot=0)         # 5V の 33 Ω（L チャンネル = 下）
     p["C1"] = dict(x=XO + 10.5, y=YC - 4.3, rot=270)
     for ref, i, rot in (("R11", 0, 270), ("R12", 1, 270), ("R5", 2, 90), ("R6", 3, 90), ("R13", 4, 270), ("R14", 5, 270)):
         p[ref] = dict(x=col(i), y=YC + 4.4, rot=rot)                     # 下の列（D0〜D5）の真上
@@ -99,43 +102,70 @@ def placement():
     p["C2"] = dict(x=col(6), y=YC - 4.6, rot=270)
     p["C3"] = dict(x=col(6), y=YC + 4.4, rot=270)
     # --- テストポイント: 上の縁 = 電源と I2C（3V3・SCL・SDA）、下の縁 = XSHUT、右ゾーン = 電流（ILED）と GND
-    for ref, x in (("TP1", 1.6), ("TP3", 4.9), ("TP4", 8.2)):
+    for ref, x in (("TP1", 1.5), ("TP3", 4.6), ("TP4", 7.7)):
         p[ref] = dict(x=x, y=1.8, rot=0)
-    for ref, x in (("TP5", 1.6), ("TP6", 4.9)):
-        p[ref] = dict(x=x, y=H - 1.8, rot=0)
+    p["TP5"] = dict(x=27.4, y=H - 1.8, rot=0)             # XSHUT_L: 下の縁（J1 の右）
+    p["TP6"] = dict(x=27.4, y=1.8, rot=0)                 # XSHUT_R: 上の縁（J2 の右）
     return p
 
 
-# 部品名を上面の刻印に出すもの（ほかは Fab 層。小さい部品の刻印は重なって読めないため）。値は (dx, dy) = 部品の中心からの位置
-SILK_REF = {"J1": (9.6, -2.4), "J2": (9.6, 2.4)}
+# 部品名を上面の刻印に出すもの（ほかは Fab 層。小さい部品の刻印は重なって読めないため）
+SILK_REF = {}
+
+TOF_PINS = ["VIN", "GND", "SCL", "SDA", "XSHUT", "GPIO1"]       # J1 / J2 のピン 1〜6（仮。ToF 小基板の実物で確かめる）
+
 
 # 上面の刻印: (文字, x, y, 大きさ, 配置, 角度)。配置 = "l" 左寄せ / "r" 右寄せ / "c" 中央
 def silk_items(pl):
     it = []
     tp = lambda ref: (pl[ref]["x"], pl[ref]["y"])                        # noqa: E731
-    # 上下の縁の TP（3.3 mm ピッチ）は、名前を縦書き（90°）にして、ランドの右に置く
+    # 縁の TP は、名前を縦書き（90°）にして、ランドの右に置く
     for ref, name in (("TP1", "3V3"), ("TP3", "SCL"), ("TP4", "SDA"), ("TP5", "XSL"), ("TP6", "XSR")):
         x, y = tp(ref)
         it.append((name, x + 1.65, y, 0.8, "c", 90))
     for ref, name in (("TP2", "GND"), ("TP7", "ILL"), ("TP8", "ILR")):
         x, y = tp(ref)
         it.append((name, x - 1.25, y, 0.8, "r", 0))
-    for sj in ("SJ1", "SJ2"):
+    for sj, s1 in (("SJ1", -1), ("SJ2", +1)):                        # pad1（3V3 側）は中心線寄り、pad3（5V 側）は縁寄り。名前は右に
         x, y = tp(sj)
-        dy = -2.6 if sj == "SJ1" else 2.6
-        it.append(("3V3", x - 1.3, y + dy, 0.8, "c", 0))
-        it.append(("5V", x + 1.3, y + dy, 0.8, "c", 0))
+        it.append(("3V3", x + 1.5, y + s1 * 1.3, 0.8, "l", 0))
+        it.append(("5V", x + 1.5, y - s1 * 1.3, 0.8, "l", 0))
     for j, dy in (("J3", -2.4), ("J4", 2.4)):
         x, y = tp(j)
         it.append(("+", x, y + dy, 0.8, "c", 0))
         it.append(("-", x + 2.54, y + dy, 0.8, "c", 0))
-    it.append(("L", pl["D1"]["x"], pl["D1"]["y"] + 1.75, 0.8, "c", 0))
-    it.append(("R", pl["D2"]["x"], pl["D2"]["y"] - 1.75, 0.8, "c", 0))
+    # ToF ヘッダ J1 / J2 の 6 本の信号名（ピン 1 = 右）。隣り合うピンの名前がぶつからないよう、2 段に互い違いに置く
+    for j, sgn, tag in (("J1", -1, "J1 ToF-L"), ("J2", +1, "J2 ToF-R")):
+        jx, jy = tp(j)
+        ya, yb = jy + sgn * 1.6, jy + sgn * 2.7
+        for k, name in enumerate(TOF_PINS):
+            it.append((name, jx - 2.54 * k, ya if k % 2 == 0 else yb, 0.8, "c", 0))
+        it.append((tag, jx - 2.54 * 5 - 2.2, yb, 0.8, "r", 0))
+    # 左右: 大きく（LED の隣）。USB-C の向き: 左下の矢印と文字
+    it.append(("L", pl["D1"]["x"], pl["D1"]["y"] + 3.0, 1.5, "c", 0))
+    it.append(("R", pl["D2"]["x"], pl["D2"]["y"] - 3.0, 1.5, "c", 0))
+    it.append(("USB-C", 4.4, H - 1.7, 0.8, "l", 0))
     return it
 
 
+def silk_lines(pl):
+    """上面の刻印の線: (x1, y1, x2, y2)。ToF ヘッダの奥の段の名前からピンへの引き出し線、USB-C の矢印。"""
+    ln = []
+    for j, sgn in (("J1", -1), ("J2", +1)):
+        jx, jy = pl[j]["x"], pl[j]["y"]
+        yb = jy + sgn * 2.7
+        for k in range(1, 6, 2):
+            x = jx - 2.54 * k
+            ln.append((x, yb - sgn * 0.7, x, jy + sgn * 1.1))
+    y = H - 1.7
+    ln.append((0.9, y, 3.9, y))
+    ln.append((0.9, y, 1.7, y - 0.5))
+    ln.append((0.9, y, 1.7, y + 0.5))
+    return ln
+
+
 # 裏面の凡例（B.SilkS、鏡文字）: 右のゾーン中央。裏から読める
-BACK_LEGEND = ["HSB REV A", "L=LOWER", "R=UPPER", "TOF ORDER", "TBD"]
+BACK_LEGEND = ["HSB REV A", "L=LOWER", "R=UPPER", "TOF PINS", "TBC"]
 
 
 # ---------------------------------------------------------------------------------------------- ネットリスト
@@ -209,12 +239,22 @@ def edge_cuts(board):
     arc((r, H - r), (r, H), (0, H - r))
 
 
+def add_line(board, x1, y1, x2, y2, layer, width=0.12):
+    s = pcbnew.PCB_SHAPE(board)
+    s.SetShape(pcbnew.SHAPE_T_SEGMENT)
+    s.SetLayer(layer)
+    s.SetStart(P(x1, y1))
+    s.SetEnd(P(x2, y2))
+    s.SetWidth(FromMM(width))
+    board.Add(s)
+
+
 def add_text(board, text, x, y, rot, size, layer, just="c", mirrored=False):
     t = pcbnew.PCB_TEXT(board)
     t.SetText(text)
     t.SetLayer(layer)
     t.SetTextSize(VECTOR2I(FromMM(size), FromMM(size)))
-    t.SetTextThickness(FromMM(0.12))
+    t.SetTextThickness(FromMM(0.12 if size < 1.2 else 0.2))
     t.SetPosition(P(x, y))
     t.SetTextAngleDegrees(rot)
     t.SetHorizJustify({"l": pcbnew.GR_TEXT_H_ALIGN_LEFT, "r": pcbnew.GR_TEXT_H_ALIGN_RIGHT, "c": pcbnew.GR_TEXT_H_ALIGN_CENTER}[just])
@@ -288,6 +328,8 @@ def build():
     edge_cuts(board)
     for text, x, y, size, just, rot in silk_items(place):
         add_text(board, text, x, y, rot, size, pcbnew.F_SilkS, just)
+    for x1, y1, x2, y2 in silk_lines(place):
+        add_line(board, x1, y1, x2, y2, pcbnew.F_SilkS)
     for i, line in enumerate(BACK_LEGEND):                          # 裏面の凡例（鏡文字）
         add_text(board, line, W - 6.0, YC - 2.4 + i * 1.2, 0, 0.8, pcbnew.B_SilkS, "c", mirrored=True)
     board.Save(str(PCB))
@@ -312,16 +354,27 @@ def geometry(board, nets):
         for pad in fp.Pads():
             bb = pad.GetBoundingBox()
             c = rel(pad.GetPosition())
-            pads.append(dict(n=pad.GetNumber(), c=c, w=ToMM(bb.GetWidth()), h=ToMM(bb.GetHeight()),
+            poly = None
+            if pad.GetShape() == pcbnew.PAD_SHAPE_CUSTOM:                  # 自作形状のランド（NSSW157T）: 外形の多角形
+                pp = pad.GetEffectivePolygon(pcbnew.F_Cu)
+                poly = [rel(pp.Outline(0).CPoint(k)) for k in range(pp.Outline(0).PointCount())]
+            pads.append(dict(n=pad.GetNumber(), c=c, bc=rel(bb.GetCenter()), poly=poly, w=ToMM(bb.GetWidth()), h=ToMM(bb.GetHeight()),
                              drill=ToMM(pad.GetDrillSize().x) if pad.HasHole() else 0, net=pad.GetNetname(),
-                             shape="round" if pad.GetShape() == pcbnew.PAD_SHAPE_CIRCLE else "rect"))
+                             shape="round" if pad.GetShape() == pcbnew.PAD_SHAPE_CIRCLE else "rect",
+                             kind={pcbnew.PAD_SHAPE_CIRCLE: "circle", pcbnew.PAD_SHAPE_OVAL: "oval", pcbnew.PAD_SHAPE_ROUNDRECT: "roundrect"}.get(pad.GetShape(), "rect"),
+                             thru=pad.GetAttribute() in (pcbnew.PAD_ATTRIB_PTH, pcbnew.PAD_ATTRIB_NPTH),
+                             npth=pad.GetAttribute() == pcbnew.PAD_ATTRIB_NPTH))
             if pad.GetNetname():
                 out["nets"].setdefault(pad.GetNetname(), []).append(dict(ref=fp.GetReference(), n=pad.GetNumber(), c=c))
         out["fps"].append(dict(ref=fp.GetReference(), value=fp.GetValue(), c=rel(fp.GetPosition()), rot=fp.GetOrientationDegrees(),
                                court=cy, pads=pads, dnp=fp.IsDNP()))
+    out["silk_lines"] = []
     for d in board.GetDrawings():
         if isinstance(d, pcbnew.PCB_TEXT) and d.GetLayer() == pcbnew.F_SilkS:
-            out["silk"].append(dict(text=d.GetText(), c=rel(d.GetPosition()), rot=d.GetTextAngleDegrees(), h=ToMM(d.GetTextHeight())))
+            out["silk"].append(dict(text=d.GetText(), c=rel(d.GetPosition()), rot=d.GetTextAngleDegrees(), h=ToMM(d.GetTextHeight()),
+                                    just={pcbnew.GR_TEXT_H_ALIGN_LEFT: "l", pcbnew.GR_TEXT_H_ALIGN_RIGHT: "r"}.get(d.GetHorizJustify(), "c")))
+        elif isinstance(d, pcbnew.PCB_SHAPE) and d.GetLayer() == pcbnew.F_SilkS:
+            out["silk_lines"].append([rel(d.GetStart()), rel(d.GetEnd())])
     return out
 
 

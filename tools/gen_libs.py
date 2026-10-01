@@ -14,7 +14,10 @@
   Q_NMOS_GSD   … KiCad 標準 Device:Q_NMOS の図形を流用（ピン番号だけ SOT-23 の 1=G 2=S 3=D に直した）
 """
 import pathlib
+import sys
 import uuid
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 LIBS = ROOT / "libs"
@@ -86,7 +89,7 @@ def sym_tof_header():
     pins += sym_pin("passive", 5.08, -10.16, 90, "GND", "2")
     s = sym_head("ToF_Header_1x06")
     s += sym_prop("Reference", "J", (0, 13.97, 0)) + sym_prop("Value", "ToF_Header_1x06", (0, -13.97, 0))
-    s += sym_prop("Footprint", "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical", (0, 0, 0), True)
+    s += sym_prop("Footprint", "head-sensor-board:PinHeader_1x06_P2.54mm_NoSilk", (0, 0, 0), True)
     s += sym_prop("Datasheet", "", (0, 0, 0), True)
     s += sym_prop("Description", "VL53L1X small module header 1x06 2.54 mm. PIN ORDER IS A PLACEHOLDER - UNVERIFIED (module not in hand yet). "
                   "Placeholder order: 1 VIN, 2 GND, 3 SCL, 4 SDA, 5 XSHUT, 6 GPIO1", (0, 0, 0), True)
@@ -150,6 +153,12 @@ def fp_poly_text(text, x, y, layer, size=0.8, thick=0.12):
             f'\t\t\t\t(size {size} {size})\n\t\t\t\t(thickness {thick})\n\t\t\t)\n\t\t)\n\t)\n')
 
 
+def model_line(name, rot_z=0):
+    """3D モデル（3dmodels の簡易モデル。mm で書いた VRML を KiCad の単位（0.1 インチ）に合わせるため scale 0.3937）。"""
+    return (f'\t(model "${{KIPRJMOD}}/3dmodels/{name}"\n\t\t(offset\n\t\t\t(xyz 0 0 0)\n\t\t)\n\t\t(scale\n\t\t\t(xyz 0.3937 0.3937 0.3937)\n\t\t)\n'
+            f'\t\t(rotate\n\t\t\t(xyz 0 0 {rot_z})\n\t\t)\n\t)\n')
+
+
 def write_xiao_footprint():
     pitch, half_row = 2.54, 7.62            # 行間隔 15.24 = 2 × 7.62
     s = ('(footprint "XIAO_ESP32S3_THT_2x7_P2.54mm"\n\t(version 20260206)\n\t(generator "kicad-footprint-generator")\n'
@@ -177,7 +186,7 @@ def write_xiao_footprint():
         shape = "rect" if num == "1" else "circle"
         s += (f'\t(pad "{num}" thru_hole {shape}\n\t\t(at {x} {y})\n\t\t(size 1.8 1.8)\n\t\t(drill 1.02)\n'
               f'\t\t(layers "*.Cu" "*.Mask")\n\t\t(remove_unused_layers no)\n\t)\n')
-    s += '\t(embedded_fonts no)\n)\n'
+    s += '\t(embedded_fonts no)\n' + model_line('XIAO_ESP32S3_Sense_stack.wrl') + ')\n'
     (LIBS / "head-sensor-board.pretty" / "XIAO_ESP32S3_THT_2x7_P2.54mm.kicad_mod").write_text(s, encoding="utf-8", newline="\n")
 
 
@@ -205,7 +214,7 @@ def write_led_footprint():
     s += fp_line(-2.25, -1.0, -2.25, 1.0, "F.SilkS", 0.12)
     s += pad("1", -1.7, 0.6, 1.55, [(0.0, -0.43), (1.96, -0.43), (1.96, 0.43), (0.0, 0.43)])
     s += pad("2", 1.7, 0.6, 1.55, [(0.0, -0.43), (-0.94, -0.43), (-0.94, 0.43), (0.0, 0.43)])   # 本体側 x[0.76, 1.40]
-    s += '\t(embedded_fonts no)\n)\n'
+    s += '\t(embedded_fonts no)\n' + model_line('LED_NSSW157T.wrl') + ')\n'
     (LIBS / "head-sensor-board.pretty" / "LED_Nichia_NSSW157T.kicad_mod").write_text(s, encoding="utf-8", newline="\n")
 
 
@@ -262,6 +271,27 @@ def write_tp_footprint():
     (LIBS / "head-sensor-board.pretty" / "TestPoint_Pad_D1.5mm_NoSilk.kicad_mod").write_text(TP_FOOTPRINT, encoding="utf-8", newline="\n")
 
 
+def write_header_footprint():
+    """標準の PinHeader_1x06_P2.54mm_Vertical から、上面シルクの外枠（線・四角）だけ除いたもの（ToF ヘッダ J1 / J2 用）。
+    ピンの隣に 6 本の信号名を刻印するため（標準の枠と重なる）。ランド・穴・コートヤード・Fab は標準のまま。"""
+    import kicad_sexpr as K
+    src = pathlib.Path("C:/Program Files/KiCad/10.0/share/kicad/footprints/Connector_PinHeader_2.54mm.pretty/PinHeader_1x06_P2.54mm_Vertical.kicad_mod")
+    fp = K.parse(src.read_text(encoding="utf-8"))
+    fp[1] = K.Q("PinHeader_1x06_P2.54mm_NoSilk")
+    keep = []
+    for c in fp:
+        if isinstance(c, list) and c and c[0] in ("fp_line", "fp_rect", "fp_poly", "fp_circle", "fp_arc"):
+            layer = K.find(c, "layer")
+            if layer is not None and str(layer[1]) == "F.SilkS":
+                continue
+        if isinstance(c, list) and c and c[0] == "descr":
+            c[1] = K.Q(str(c[1]) + " (project copy: top silkscreen outline removed to make room for the signal-name legend)")
+        if isinstance(c, list) and c and c[0] == "property" and str(c[1]) == "Value":
+            c[2] = K.Q("PinHeader_1x06_P2.54mm_NoSilk")
+        keep.append(c)
+    (LIBS / "head-sensor-board.pretty" / "PinHeader_1x06_P2.54mm_NoSilk.kicad_mod").write_text(K.dump(keep) + chr(10), encoding="utf-8", newline=chr(10))
+
+
 def write_tables():
     sym = ('(sym_lib_table\n\t(version 7)\n\t(lib\n\t\t(name "head-sensor-board")\n\t\t(type "KiCad")\n'
            '\t\t(uri "${KIPRJMOD}/libs/head-sensor-board.kicad_sym")\n\t\t(options "")\n'
@@ -279,5 +309,6 @@ if __name__ == "__main__":
     write_xiao_footprint()
     write_led_footprint()
     write_tp_footprint()
+    write_header_footprint()
     write_tables()
-    print("ok: libs/head-sensor-board.kicad_sym, .pretty (3 footprints), sym-lib-table, fp-lib-table")
+    print("ok: libs/head-sensor-board.kicad_sym, .pretty (4 footprints), sym-lib-table, fp-lib-table")

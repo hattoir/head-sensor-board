@@ -1431,7 +1431,7 @@
 					)
 				)
 			)
-			(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical"
+			(property "Footprint" "head-sensor-board:PinHeader_1x06_P2.54mm_NoSilk"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -3201,7 +3201,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical"
+		(property "Footprint" "head-sensor-board:PinHeader_1x06_P2.54mm_NoSilk"
 			(at 200.66 66.04 0)
 			(hide yes)
 			(show_name no)
@@ -3695,7 +3695,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical"
+		(property "Footprint" "head-sensor-board:PinHeader_1x06_P2.54mm_NoSilk"
 			(at 200.66 111.76 0)
 			(hide yes)
 			(show_name no)

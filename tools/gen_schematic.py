@@ -265,7 +265,7 @@ def build():
                   "Notes": "VL53L1X small module (Amazon B083Z316NC) on jumper wires. PIN ORDER IS A PLACEHOLDER - UNVERIFIED (module not in hand)"}
     for ref, val, at, sh, inte, dnet in (("J1", "ToF_L (PLACEHOLDER)", (g(158), g(52)), "XSHUT_L", "TOF_L_INT", "D8_GPIO7"),
                                           ("J2", "ToF_R (PLACEHOLDER)", (g(158), g(88)), "XSHUT_R", "TOF_R_INT", "D9_GPIO8")):
-        s.place("head-sensor-board:ToF_Header_1x06", ref, val, at, 0, "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical",
+        s.place("head-sensor-board:ToF_Header_1x06", ref, val, at, 0, "head-sensor-board:PinHeader_1x06_P2.54mm_NoSilk",
                 fields=tof_fields, ref_off=(0, -16.0, "center"), val_off=(-4.0, 18.0, "center"))
         s.power("+3V3", s.pin(ref, 1))
         s.power("GND", s.pin(ref, 2))

@@ -185,4 +185,15 @@
 		(remove_unused_layers no)
 	)
 	(embedded_fonts no)
+	(model "${KIPRJMOD}/3dmodels/XIAO_ESP32S3_Sense_stack.wrl"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 0.3937 0.3937 0.3937)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
 )

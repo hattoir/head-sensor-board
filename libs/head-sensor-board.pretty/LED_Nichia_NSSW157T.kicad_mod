@@ -119,4 +119,15 @@
 		)
 	)
 	(embedded_fonts no)
+	(model "${KIPRJMOD}/3dmodels/LED_NSSW157T.wrl"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 0.3937 0.3937 0.3937)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
 )

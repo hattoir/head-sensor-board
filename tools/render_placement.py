@@ -192,12 +192,12 @@ def render(geo, out_path):
 
     # --- 凡例
     ly = Y(H) + 150
-    d.text((MX, ly), "head-sensor-board Rev A — Stage 3 部品配置案（上面から見た図。配線なし）", font=f_xl, fill=ink)
+    d.text((MX, ly), "head-sensor-board Rev A — 部品配置案（上面から見た図。配線なし。配線後の図は render_routed.py）", font=f_xl, fill=ink)
     lines = [
-        f"基板 {W:g} × {H:g} mm、角 R{CR:g}、M2 穴 ×2（左下・右上の対角）。下半分 = L チャンネル（XIAO の D0〜D6 の列に近い側）、上半分 = R チャンネル。",
+        f"基板 {W:g} × {H:g} mm、角 R{CR:g}、M2 穴 ×2（右の 2 つの角）。下半分 = L チャンネル（XIAO の D0〜D6 の列に近い側）、上半分 = R チャンネル。",
         "細い線 = 未配線の接続（ラットネスト。GND は省略）。青 = I2C、緑 = XSHUT、橙 = LED の PWM・ゲート、赤 = 電源・LED の電流、紫 = ToF の GPIO1。* = 未実装（DNP）。",
         "XIAO は USB-C を左の縁に向けてソケットに載せる。ソケットの内側（薄い青の範囲）には、高さ 0.9 mm 以下の 0603 / 2010 の部品だけを置く。",
-        "この配置では 40 × 25 mm が下限（幅 39.5 または高さ 24.8 でコートヤードが重なる）。LED の高さは 0.52 mm。M2 穴は LED の縁側の 2 つの角。",
+        "LED の高さは 0.52 mm。M2 穴は LED の縁側の 2 つの角。",
     ]
     for i, t in enumerate(lines):
         d.text((MX, ly + 52 + i * 30), t, font=f_m, fill=ink)

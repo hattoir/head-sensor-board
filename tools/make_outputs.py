@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage 2 の成果物をまとめて作る（回路図からの派生物。手で編集しない）。
+"""検査・書き出しをまとめて作る（回路図・基板からの派生物。手で編集しない）。Stage 4 時点。
 
     python tools/make_outputs.py
 
@@ -7,9 +7,9 @@
   docs/erc_report.txt                     ERC（プロジェクトの設定どおり）
   docs/erc_report_strict.txt              ERC（既定で無視される 4 種の検査も有効にした厳格版）
   docs/head-sensor-board_schematic.pdf    回路図 PDF
-  docs/drc_report.txt                     DRC（回路図との対応つき）。Stage 3 は「未配線」だけが残る
-  docs/placement_top.png / _bottom.png    KiCad の描画（上面・裏面。pymupdf があれば）。注記つきの配置図は tools/gen_pcb.py が docs/placement_annotated.png を作る
-  docs/bom.csv / docs/bom.md              BOM（型番・パッケージ・定格つき）
+  docs/drc_report.txt                     DRC（回路図との対応つき）。Stage 4 は違反 0 件が合格
+  （--bom をつけたときだけ）docs/bom.csv / docs/bom.md   BOM。Stage 4 の PNG を User が確認するまでは作らない（User 指示）
+  ガーバー・位置ファイル（pos）は、このスクリプトでは作らない（Stage 4 の PNG 確認後）
   ../../head-sensor-board_upload.zip      BoardRepo 用の束（C:/2026/Serpens_Home AI/ に置く。Git には入れない）
 """
 import csv
@@ -60,7 +60,7 @@ def pdf():
 
 
 def drc():
-    """基板の DRC（回路図との対応の検査つき）。Stage 3 は配線前なので「未配線」以外が 0 であることを確かめる。"""
+    """基板の DRC（回路図との対応の検査つき）。違反 0 件（未接続 0・回路図との不一致 0 を含む）が合格。"""
     rpt = DOCS / "drc_report.txt"
     run(["pcb", "drc", "--format", "report", "--severity-all", "--schematic-parity", "--output", rpt, ROOT / "head-sensor-board.kicad_pcb"])
     kinds = {}
@@ -68,27 +68,8 @@ def drc():
         if line.startswith("[") and "]" in line:
             k = line[1:line.index("]")]
             kinds[k] = kinds.get(k, 0) + 1
-    other = {k: v for k, v in kinds.items() if k != "unconnected_items"}
-    print("DRC:", kinds or "0 violations", "| 未配線以外:", other or "0")
-    return not other
-
-
-def placement_images():
-    """KiCad 自身の描画（上面・裏面）を PNG にする。SVG → PNG に pymupdf が要る（無ければ飛ばす）。"""
-    try:
-        import pymupdf
-    except ImportError:
-        print("placement images: skipped (pip install pymupdf が必要)")
-        return
-    pcb = ROOT / "head-sensor-board.kicad_pcb"
-    for name, layers, extra in (("top", "F.Cu,F.Mask,F.SilkS,Edge.Cuts", []), ("bottom", "B.Cu,B.Mask,B.SilkS,Edge.Cuts", ["--mirror"])):
-        with tempfile.TemporaryDirectory() as d:
-            svg = pathlib.Path(d) / f"{name}.svg"
-            run(["pcb", "export", "svg", "--layers", layers, "--exclude-drawing-sheet", "--page-size-mode", "2", *extra, "--output", svg, pcb])
-            pg = pymupdf.open(str(svg))[0]
-            z = 1900 / pg.rect.width
-            pg.get_pixmap(matrix=pymupdf.Matrix(z, z), alpha=False).save(str(DOCS / f"placement_{name}.png"))
-    print("placement images: docs/placement_top.png, docs/placement_bottom.png")
+    print("DRC:", kinds or "0 violations")
+    return not kinds
 
 
 # 基板の外にある部品（回路図には出ないが、組み立てに要る）
@@ -182,6 +163,7 @@ def upload_zip():
     files = [".gitignore", "README.md", "head-sensor-board.kicad_pro", "head-sensor-board.kicad_sch", "head-sensor-board.kicad_pcb",
              "sym-lib-table", "fp-lib-table", "libs/head-sensor-board.kicad_sym"]
     files += [f"libs/head-sensor-board.pretty/{p.name}" for p in sorted((ROOT / "libs" / "head-sensor-board.pretty").glob("*.kicad_mod"))]
+    files += [f"3dmodels/{p.name}" for p in sorted((ROOT / "3dmodels").glob("*.wrl"))]
     with zipfile.ZipFile(ZIP_OUT, "w", zipfile.ZIP_DEFLATED) as z:
         for f in files:
             z.write(ROOT / f, f)
@@ -192,7 +174,9 @@ if __name__ == "__main__":
     ok = erc()
     pdf()
     ok = drc() and ok
-    placement_images()
-    bom()
+    if "--bom" in sys.argv:
+        bom()
+    else:
+        print("BOM: skipped（Stage 4 の PNG の確認後に --bom で作る）")
     upload_zip()
     sys.exit(0 if ok else 1)
