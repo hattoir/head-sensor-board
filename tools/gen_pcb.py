@@ -56,6 +56,9 @@ def mirror(y):
     return 2 * YC - y
 
 
+JEDGE = 1.45                  # ToF ヘッダのピンの中心から基板の縁までの距離 [mm]
+
+
 def col(i):
     """XIAO のピン列の x 座標（i = 0..6。USB-C 側から）。"""
     return XO + 2.88 + 2.54 * i
@@ -72,8 +75,8 @@ def placement():
     # --- ToF ヘッダ: 上下の長辺の縁（ジャンパー線を縁から出す）。180° 回して pin1 を右にする
     #     （XIAO の SDA（D4）が SCL（D5）の左にあるのと、ヘッダの SDA が SCL の左にある向きをそろえて、配線を交差させない）。
     #     ピンの x は XIAO のピン列と同じ 2.54 mm の格子に乗せる（col(7) = 21.26 の 1 つ右 = col(8)）
-    p["J1"] = dict(x=col(8), y=H - 1.7, rot=270)
-    p["J2"] = dict(x=col(8), y=1.7, rot=270)
+    p["J1"] = dict(x=col(8), y=H - JEDGE, rot=270)                     # 縁寄り（ランドの縁から 0.6 mm）。内側に信号名の 2 段を置く余地をつくる
+    p["J2"] = dict(x=col(8), y=JEDGE, rot=270)
     # --- LED: 右の縁（LED の縁）。外付け LED ヘッダ J3/J4: 上下の長辺の縁の右寄り（pin1 = +、pin2 = −。左から右）
     #     L チャンネル（下半分）の流れ: 3V3 → R1 → SJ1 の pad1、5V → R3 → SJ1 の pad3、pad2 → LED のアノード
     p["D1"] = dict(x=W - 3.0, y=YC + 5.6, rot=0)          # 左がカソード、右がアノード
@@ -115,29 +118,56 @@ SILK_REF = {}
 TOF_PINS = ["VIN", "GND", "SCL", "SDA", "XSHUT", "GPIO1"]       # J1 / J2 のピン 1〜6（仮。ToF 小基板の実物で確かめる）
 
 
+# 文字の筆の跡の枠（KiCad で測った値。大きさ 0.8 mm・太さ 0.12 mm の英大文字・数字）: 高さ 0.92 mm、中心からの上端 -0.50 / 下端 +0.42
+GLYPH_UP, GLYPH_DN = 0.50, 0.42
+HOUSING = 1.27                # ピンヘッダの樹脂部（2.54 mm 角）の半分
+SILK_GAP = 0.15               # 刻印と刻印・樹脂部・ランドのすきま
+SJ_SILK = 2.25                # 縦並びの半田ジャンパーの中心から、名前の文字の端までの距離（SJ の標準の枠は中心から 約 2.05 mm）
+
+
+def tof_rows(jy, sgn):
+    """ToF ヘッダの信号名 2 段の文字の中心 y（手前 = ピンに近い段 A、奥 = 段 B）。樹脂部の外に置く。sgn = +1: 内側が +y（J2）、-1: 内側が -y（J1）。"""
+    edge = jy + sgn * HOUSING                                       # 樹脂部の内側の端
+    if sgn > 0:
+        a = edge + SILK_GAP + GLYPH_UP                              # 文字の上端 = 端 + すきま
+        b = a + GLYPH_DN + SILK_GAP + GLYPH_UP
+    else:
+        a = edge - SILK_GAP - GLYPH_DN                              # 文字の下端 = 端 - すきま
+        b = a - GLYPH_UP - SILK_GAP - GLYPH_DN
+    return a, b
+
+
 # 上面の刻印: (文字, x, y, 大きさ, 配置, 角度)。配置 = "l" 左寄せ / "r" 右寄せ / "c" 中央
 def silk_items(pl):
     it = []
     tp = lambda ref: (pl[ref]["x"], pl[ref]["y"])                        # noqa: E731
-    # 縁の TP は、名前を縦書き（90°）にして、ランドの右に置く
+    # 縁の TP は、名前をランドの内側（基板の中心側）に横書きで置く
     for ref, name in (("TP1", "3V3"), ("TP3", "SCL"), ("TP4", "SDA"), ("TP5", "XSL"), ("TP6", "XSR")):
         x, y = tp(ref)
-        it.append((name, x + 1.65, y, 0.8, "c", 90))
+        if y < H / 2:
+            it.append((name, x, y + 0.75 + SILK_GAP + GLYPH_UP, 0.8, "c", 0))        # 上の縁: ランドの下
+        else:
+            it.append((name, x, y - 0.75 - SILK_GAP - GLYPH_DN, 0.8, "c", 0))        # 下の縁: ランドの上
     for ref, name in (("TP2", "GND"), ("TP7", "ILL"), ("TP8", "ILR")):
         x, y = tp(ref)
         it.append((name, x - 1.25, y, 0.8, "r", 0))
-    for sj, s1 in (("SJ1", -1), ("SJ2", +1)):                        # pad1（3V3 側）は中心線寄り、pad3（5V 側）は縁寄り。名前は右に
+    # SJ（縦並び）: 3V3 側（pad1）の名前はパッドの積み重ねの中心線寄りの外、5V 側（pad3）の名前は縁寄りの外。SJ の枠（中心から 2.0 mm）の外に出す
+    for sj, s1 in (("SJ1", -1), ("SJ2", +1)):
         x, y = tp(sj)
-        it.append(("3V3", x + 1.5, y + s1 * 1.3, 0.8, "l", 0))
-        it.append(("5V", x + 1.5, y - s1 * 1.3, 0.8, "l", 0))
+        if s1 < 0:      # SJ1（下半分）: pad1 が上、pad3 が下
+            it.append(("3V3", x, y - SJ_SILK - GLYPH_DN, 0.8, "c", 0))
+            it.append(("5V", x, y + SJ_SILK + GLYPH_UP, 0.8, "c", 0))
+        else:           # SJ2（上半分）: pad1 が下、pad3 が上
+            it.append(("3V3", x, y + SJ_SILK + GLYPH_UP, 0.8, "c", 0))
+            it.append(("5V", x, y - SJ_SILK - GLYPH_DN, 0.8, "c", 0))
     for j, dy in (("J3", -2.4), ("J4", 2.4)):
         x, y = tp(j)
         it.append(("+", x, y + dy, 0.8, "c", 0))
         it.append(("-", x + 2.54, y + dy, 0.8, "c", 0))
-    # ToF ヘッダ J1 / J2 の 6 本の信号名（ピン 1 = 右）。隣り合うピンの名前がぶつからないよう、2 段に互い違いに置く
+    # ToF ヘッダ J1 / J2 の 6 本の信号名（ピン 1 = 右）。樹脂部（2.54 mm 角）の外に、2 段を互い違いに置く（隣のピンの名前とぶつからない）
     for j, sgn, tag in (("J1", -1, "J1 ToF-L"), ("J2", +1, "J2 ToF-R")):
         jx, jy = tp(j)
-        ya, yb = jy + sgn * 1.6, jy + sgn * 2.7
+        ya, yb = tof_rows(jy, sgn)
         for k, name in enumerate(TOF_PINS):
             it.append((name, jx - 2.54 * k, ya if k % 2 == 0 else yb, 0.8, "c", 0))
         it.append((tag, jx - 2.54 * 5 - 2.2, yb, 0.8, "r", 0))
@@ -149,14 +179,16 @@ def silk_items(pl):
 
 
 def silk_lines(pl):
-    """上面の刻印の線: (x1, y1, x2, y2)。ToF ヘッダの奥の段の名前からピンへの引き出し線、USB-C の矢印。"""
+    """上面の刻印の線: (x1, y1, x2, y2)。ToF ヘッダの奥の段（段 B）の名前からピンへの引き出し線（樹脂部の手前まで）、USB-C の矢印。"""
     ln = []
     for j, sgn in (("J1", -1), ("J2", +1)):
         jx, jy = pl[j]["x"], pl[j]["y"]
-        yb = jy + sgn * 2.7
+        ya, yb = tof_rows(jy, sgn)
+        y0 = yb + (GLYPH_DN + 0.2 if sgn < 0 else -GLYPH_UP - 0.2)         # 文字の外側の端 + 0.2
+        y1 = jy + sgn * (HOUSING + 0.25)                                    # 樹脂部の端の手前
         for k in range(1, 6, 2):
             x = jx - 2.54 * k
-            ln.append((x, yb - sgn * 0.7, x, jy + sgn * 1.1))
+            ln.append((x, y0, x, y1))
     y = H - 1.7
     ln.append((0.9, y, 3.9, y))
     ln.append((0.9, y, 1.7, y - 0.5))
@@ -326,6 +358,7 @@ def build():
                 pad.SetNet(netobj[pad_net[key]])
         board.Add(fp)
     edge_cuts(board)
+    board.GetDesignSettings().SetAuxOrigin(P(0, H))                  # ドリル・配置ファイルの原点 = 基板の左下（ガーバーもこの原点で出す）
     for text, x, y, size, just, rot in silk_items(place):
         add_text(board, text, x, y, rot, size, pcbnew.F_SilkS, just)
     for x1, y1, x2, y2 in silk_lines(place):

@@ -24,7 +24,7 @@
 | 1 | 仕様と部品表 | 完了（2026-10-01、承認済み） |
 | 2 | 回路図と ERC（エラー 0） | 完了（2026-10-01、User 確認済み。ERC 0 件） |
 | 3 | 外形と部品配置案（配線なし） | 完了（2026-10-01、User 確認済み） |
-| 4 | 外形 44×28 mm、配線、DRC（違反 0・未接続 0・回路図との不一致 0）、3D ビュー | **配線・DRC は完了。配線後の PNG の User 確認待ち**（[docs/spec.md](docs/spec.md) §6・§7）。**ガーバー・BOM・位置ファイルは、User が PNG を確認するまで出さない**（User 指示）。push は済み |
+| 4 | 外形 44×28 mm、配線、DRC（違反 0・未接続 0・回路図との不一致 0）、3D ビュー、製造データ | **完了（2026-10-02）。製造データ（ガーバー・ドリル・位置ファイル・BOM、ZIP）は [gerbers/](gerbers/) に出した。User の最終確認待ちで、発注はしていない**（[docs/spec.md](docs/spec.md) §6・§7） |
 
 ## 配線後の配置（Stage 4）
 
@@ -33,8 +33,9 @@
 - **44 × 28 mm、角 R1、M2 穴 ×2**（右の 2 つの角、縁から 2.1 mm）。2 層。`python tools/make_board.py --width W --height H` で、外形・配置・配線・DRC まで作り直せる（[再生成と検証](#再生成と検証)）。
 - **USB-C は左の縁**（左下に矢印と「USB-C」の刻印）、**LED（D1/D2）と外付け LED ヘッダ（J3/J4）は右寄りの縁**、**ToF ヘッダ（J1/J2）は上下の長辺の縁**（6 本の信号名を刻印）、TP は上面。**「L」「R」の刻印**あり。
 - **下半分 = L チャンネル、上半分 = R チャンネル**（上面から見て USB-C を左にしたとき）。基板上の L/R はロボットの左右とは限らない（ジャンパー線で左右は自由に決められる）。
-- 配線: **電源（+3V3・+5V）0.5 mm、LED の電流の経路 0.4 mm、信号 0.25 mm**。GND は両面のベタ。ビア 30 個。I2C の長さは SDA 32 mm・SCL 38 mm。
+- 配線: **電源（+3V3・+5V）0.5 mm、LED の電流の経路 0.4 mm、信号 0.25 mm**。GND は両面のベタ。ビア 28 個。I2C の長さは SDA 32 mm・SCL 38 mm。
 - **DRC: 違反 0 件**（クリアランス 0.2 mm・縁 0.5 mm・未接続 0・回路図との不一致 0。プロジェクトで「無視」にしていた 4 種の検査も有効にして 0 件）。[docs/drc_report.txt](docs/drc_report.txt)
+- **刻印の検査**（`tools/check_board.py`）: 上面の刻印 137 個が、ランド・ヘッダの樹脂部（2.54 mm 角）・ほかの刻印・XIAO の外形・基板の縁と、**0.1 mm 以上あいている**。J1/J2 の信号名は樹脂部の外に 2 段で置き、奥の段には樹脂部の手前までの引き出し線を引いた。
 - XIAO の下（ソケットの内側）に小さい部品を置き、裏面は GND ベタ。Sense 拡張ボード（カメラ・microSD）は XIAO の上面に載り、基板側の部品とは干渉しない（出っ張りは未確認。[docs/spec.md](docs/spec.md) §6.5）。
 
 | | |
@@ -47,6 +48,12 @@
 ## ToF 小基板のピン配置と、ジャンパー線の対応表（**現物が届いたら埋める**）
 
 J1 / J2 の 6 本は、ToF 小基板（VL53L1X、Amazon B083Z316NC）へジャンパー線でつなぐ。**小基板のピン配置は販売ページに記載がなく、未確認。** ヘッダの並び（上面に信号名を刻印）は仮で、**小基板の並びが違っても基板の作り直しは要らない**（線でつなぎ替える）。J1 = ToF L（下の縁）、J2 = ToF R（上の縁）。pin1 は右端（上面から見て、VIN）。
+
+### J1 / J2 の向き（Stage 3 から 180° 回した理由）と確認結果
+
+- **ピン 1（四角いパッド）は右端**（上面から見て USB-C を左にしたとき）。刻印の並びは**右から** VIN, GND, SCL, SDA, XSHUT, GPIO1（左から読むと GPIO1, XSHUT, SDA, SCL, GND, VIN）。J1 と J2 は同じ向き・同じ x（ピン 1 = 基板の左端から 23.8 mm）。
+- Stage 3 ではピン 1 が左端だった。**Stage 4 で 180° 回した理由**: XIAO では SDA（D4）が SCL（D5）の左にある。ヘッダも SDA が SCL の左になる向きにすると、I2C の線が交差せずに、層の乗り換え（ビア）も減る。ヘッダの**信号の割り当て（pin1 = VIN … pin6 = GPIO1）は回路図のまま変えていない**（並べ替えは物理的な向きだけ）。ジャンパー線で小基板につなぐので、向きは線の取り回しにしか影響しない。
+- 確認（`python tools/check_board.py`、基板を直接読む）: J1/J2 の 6 パッドすべてで、**基板のネット = 回路図のネット = 刻印の名前**（pin1 +3V3/VIN、pin2 GND、pin3 SCL、pin4 SDA、pin5 XSHUT_L/R、pin6 TOF_L_INT/TOF_R_INT/GPIO1）。四角いパッドは pin1 だけ。
 
 ### 小基板の仕様（現物で確認して埋める）
 
@@ -79,7 +86,7 @@ J1 / J2 の 6 本は、ToF 小基板（VL53L1X、Amazon B083Z316NC）へジャ�
 | `docs/` | [spec.md](docs/spec.md)（仕様・計算・配置・配線・検証）、[bom.md](docs/bom.md)・`bom.csv`（部品表。**Stage 2 のまま**。BOM の出力時に再生成）、`erc_report*.txt`・`drc_report.txt`、回路図 PDF、配線後の配置図・層ごとの配線・3D ビュー（PNG）、`routes.json`（配線の結果）、`led_budget_output.txt` |
 | `libs/` | 自作のシンボル・フットプリント（**KiCad 標準ライブラリに無いものだけ**。下の「ライブラリの出典」） |
 | `3dmodels/` | 3D ビュー用の**簡易モデル**（`.wrl`。XIAO + Sense 拡張ボード、LED の箱）。`tools/gen_3d.py` で生成。見た目の確認用 |
-| `fabrication/` | 製造データ（ガーバー、ドリル、BOM、部品配置ファイル）。**まだ空**（User が配線後の PNG を確認してから出す） |
+| `gerbers/` | **製造データ**（ガーバー、ドリル、位置ファイル、BOM、`head-sensor-board_gerbers.zip`、README）。2026-10-02 に出した。**発注はしていない**（User の最終確認のあと）。中身の説明は [gerbers/README.md](gerbers/README.md) |
 | `tools/` | 計算・生成・検証のスクリプト（下の「再生成と検証」） |
 
 ## 数値・部品名の出典
@@ -123,12 +130,16 @@ python tools/gen_libs.py          # 自作ライブラリ（libs/）と sym-lib-
 python tools/gen_3d.py            # 簡易 3D モデル（3dmodels/）
 python tools/gen_schematic.py     # 回路図（※KiCad で手直しした後は実行しない。手直しが消える）
 python tools/check_netlist.py     # ネットリストを期待と照合、回路図のピン番号がフットプリントのパッドに存在するか
-python tools/make_board.py [--width 44 --height 28]
+python tools/make_board.py [--width 44 --height 28] [--reuse-routes]
                                   # 外形・配置（gen_pcb.py）→ 自動配線（route.py、numpy + scipy）→ トラック・ビア・GND ベタ（apply_routes.py）→ DRC。
                                   # ※既存の基板を作り直す（KiCad で手で直した配線は消える）。約 30 秒
+                                  # --reuse-routes: ランドの位置を変えず刻印だけ直したとき、配線をやり直さない（DRC で整合を確かめる）。自動配線は約 1〜10 分（CPU が空いていれば 1 分以内）
+"C:/Program Files/KiCad/10.0/bin/python.exe" tools/check_board.py   # J1/J2 のネット・パッド・刻印の照合、刻印のすきまの検査（問題があれば終了コード 1）
 "C:/Program Files/KiCad/10.0/bin/python.exe" tools/render_routed.py   # 配線後の配置図・層ごとの配線（docs/*.png）
 python tools/render_3d.py         # KiCad の 3D ビュー（docs/board_3d_*.png）
-python tools/make_outputs.py      # ERC・DRC・回路図 PDF・BoardRepo 用 zip（BOM は --bom をつけたときだけ。ガーバー・位置ファイルは作らない）
+python tools/make_outputs.py [--bom]   # ERC・DRC・回路図 PDF・BoardRepo 用 zip（--bom で BOM も）
+python tools/make_fabrication.py  # gerbers/（ガーバー・ドリル・位置ファイル・BOM・ZIP）。**User の確認のあとにだけ**
+python tools/verify_gerbers.py    # 出力した ZIP を別のライブラリ（gerbonara）で読み直して、基板と照合（pip install gerbonara）
 ```
 KiCad は `C:/Program Files/KiCad/10.0/bin/kicad-cli.exe`（PATH には入っていない）。`tools/pcb_template.kicad_pcb` は空の基板（層・設定だけ。`gen_pcb.py` が毎回ここから作る）。
 自動配線は KiCad の Python に scipy が無いため、基板の形状を `docs/placement_geometry.json` に書き出し → システムの Python で配線 → `docs/routes.json` → KiCad の Python で基板に書き戻す、の 3 段。
@@ -143,5 +154,4 @@ KiCad は `C:/Program Files/KiCad/10.0/bin/kicad-cli.exe`（PATH には入って
 ## 注意
 
 - `*-backups/`、`fp-info-cache`、`*.kicad_prl`、ロックファイル、自動保存、`*_upload.zip` は Git に入れない（`.gitignore`）。
-- 空のフォルダを Git に残すため `fabrication/` に `.gitkeep` を置いてある（中身が入ったら消してよい）。
 - このフォルダは、親の `serpens`（ロボット制御のリポジトリ）とは**別の Git リポジトリ**（入れ子）。親側は `.git/info/exclude` で無視している。`snake-main-board` とも別。

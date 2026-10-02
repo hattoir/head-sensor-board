@@ -40,12 +40,14 @@ def main():
     ap.add_argument("--width", default="44")
     ap.add_argument("--height", default="28")
     ap.add_argument("--no-route", action="store_true")
+    ap.add_argument("--reuse-routes", action="store_true", help="docs/routes.json をそのまま使う（ランドの位置を変えていないとき = 刻印だけ直したとき）。DRC で整合を確かめる")
     ap.add_argument("--attempts", default="6")
     ap.add_argument("--no-render", action="store_true", default=True)
     args = ap.parse_args()
     run([KPY, "tools/gen_pcb.py", "--width", args.width, "--height", args.height, "--no-render"], check=True)
     if not args.no_route:
-        run([sys.executable, "tools/route.py", "--attempts", args.attempts], check=True)
+        if not args.reuse_routes:
+            run([sys.executable, "tools/route.py", "--attempts", args.attempts], check=True)
         run([KPY, "tools/apply_routes.py"], check=True)
     counts, text = drc(str(ROOT / "docs" / "drc_report.txt"))
     print("DRC:", counts if counts else "0 violations")

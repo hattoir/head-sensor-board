@@ -1,4 +1,4 @@
-# BOM（部品表）— head-sensor-board Rev A（Stage 2）
+# BOM（部品表）— head-sensor-board Rev A（製造データ出力時）
 
 **回路図から `tools/make_outputs.py` が作る。手で直さない**（直すときは回路図 → 再生成）。生の書き出しは [bom.csv](bom.csv)。
 DNP = 既定で実装しない（フットプリントだけ置く）。**購入先・品番・価格の列は、User が秋月などで調べて埋める**（ここでは仕様だけ）。
@@ -9,7 +9,7 @@ DNP = 既定で実装しない（フットプリントだけ置く）。**購入
 | 記号 | 数量 | 値 | パッケージ（フットプリント） | 型番・種類 | 定格 | DNP | 備考 | 購入先・品番・価格 |
 |---|---|---|---|---|---|---|---|---|
 | U1 | 1 | XIAO_ESP32S3_Sense | `head-sensor-board:XIAO_ESP32S3_THT_2x7_P2.54mm` | Seeed XIAO ESP32S3 Sense | 3V3 out 700 mA (Seeed wiki, condition not stated) |  | Akizuki 118079. Mount on 2x 1x7 sockets (or pin headers). USB-C side = up in the drawing | （User が調査） |
-| J1, J2 | 2 | ToF_L (PLACEHOLDER) / ToF_R (PLACEHOLDER) | `Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical` | PinHeader 1x06 2.54 mm | 2.54 mm pitch |  | VL53L1X small module (Amazon B083Z316NC) on jumper wires. PIN ORDER IS A PLACEHOLDER - UNVERIFIED (module not in hand) | （User が調査） |
+| J1, J2 | 2 | ToF_L (PLACEHOLDER) / ToF_R (PLACEHOLDER) | `head-sensor-board:PinHeader_1x06_P2.54mm_NoSilk` | PinHeader 1x06 2.54 mm | 2.54 mm pitch |  | VL53L1X small module (Amazon B083Z316NC) on jumper wires. PIN ORDER IS A PLACEHOLDER - UNVERIFIED (module not in hand) | （User が調査） |
 | J3, J4 | 2 | LED_L_EXT (1:+ 2:-) / LED_R_EXT (1:+ 2:-) | `Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical` | PinHeader 1x02 2.54 mm | current-limited node (after R1/R3) |  | External LED: pin 1 = + (LEDA, after the series resistor), pin 2 = - (LEDK). Do NOT short + to - | （User が調査） |
 | SJ1, SJ2 | 2 | LED_L_SUPPLY / LED_R_SUPPLY | `Jumper:SolderJumper-3_P1.3mm_Bridged12_RoundedPad1.0x1.5mm` | solder jumper (PCB pads) | - |  | Default: pads 1-2 bridged = 3V3 via R1/R2. For 5V: cut the 1-2 bridge, bridge 2-3 (via R3/R4) | （User が調査） |
 | D1,D2 | 2 | NSSW157T | `head-sensor-board:LED_Nichia_NSSW157T` | NSSW157T（Nichia） | IF 150 mA max; VF 2.8-3.4 V @80 mA; 3.0x1.4x0.52 mm |  | Akizuki 116884. White chip LED, height 0.52 mm | （User が調査） |
@@ -25,7 +25,7 @@ DNP = 既定で実装しない（フットプリントだけ置く）。**購入
 | C1 | 1 | 10u | `Capacitor_SMD:C_0805_2012Metric` | ceramic capacitor 10uF | 10 V X5R 0805 |  | 3V3 bulk: LED PWM + ToF peaks (2 x 40 mA) | （User が調査） |
 | C2, C3 | 2 | 100n | `Capacitor_SMD:C_0603_1608Metric` | ceramic capacitor 100nF | 16 V X7R 0603 |  | Bypass near ToF header J1 / Bypass near ToF header J2 | （User が調査） |
 
-回路図に出るが部品ではないもの: **TP1〜TP8**（テストポイントのパッド φ1.5 mm、`TestPoint:TestPoint_Pad_D1.5mm`）、**H1, H2**（M2 取付穴 φ2.2、`MountingHole:MountingHole_2.2mm_M2`）、**SJ1, SJ2**（半田ジャンパーのパッド。部品なし）。
+回路図に出るが部品ではないもの: **TP1〜TP8**（テストポイントのパッド φ1.5 mm、自作 `TestPoint_Pad_D1.5mm_NoSilk`。部品なし）、**H1, H2**（M2 取付穴 φ2.2、`MountingHole:MountingHole_2.2mm_M2`）、**SJ1, SJ2**（半田ジャンパーのパッド。部品なし）。
 
 ## 2. 基板の外の部品（組み立てに必要）
 

@@ -8,8 +8,8 @@
   docs/erc_report_strict.txt              ERC（既定で無視される 4 種の検査も有効にした厳格版）
   docs/head-sensor-board_schematic.pdf    回路図 PDF
   docs/drc_report.txt                     DRC（回路図との対応つき）。Stage 4 は違反 0 件が合格
-  （--bom をつけたときだけ）docs/bom.csv / docs/bom.md   BOM。Stage 4 の PNG を User が確認するまでは作らない（User 指示）
-  ガーバー・位置ファイル（pos）は、このスクリプトでは作らない（Stage 4 の PNG 確認後）
+  （--bom をつけたときだけ）docs/bom.csv / docs/bom.md   BOM
+  ガーバー・ドリル・位置ファイルは、このスクリプトでは作らない（tools/make_fabrication.py。User の確認のあとにだけ）
   ../../head-sensor-board_upload.zip      BoardRepo 用の束（C:/2026/Serpens_Home AI/ に置く。Git には入れない）
 """
 import csv
@@ -110,7 +110,7 @@ def bom():
         return ({"U": 0, "J": 1, "SJ": 2, "D": 3, "Q": 4, "R": 5, "C": 6}.get(pre, 9), num)
 
     lines = [
-        "# BOM（部品表）— head-sensor-board Rev A（Stage 2）",
+        "# BOM（部品表）— head-sensor-board Rev A（製造データ出力時）",
         "",
         "**回路図から `tools/make_outputs.py` が作る。手で直さない**（直すときは回路図 → 再生成）。生の書き出しは [bom.csv](bom.csv)。",
         "DNP = 既定で実装しない（フットプリントだけ置く）。**購入先・品番・価格の列は、User が秋月などで調べて埋める**（ここでは仕様だけ）。",
@@ -132,7 +132,7 @@ def bom():
         lines.append(f"| {refs} | {g['qty']} | {v} | `{fp}` | {mpn}{mf} | {rating} | {'**DNP**' if dnp else ''} | {note} | （User が調査） |")
     lines += [
         "",
-        "回路図に出るが部品ではないもの: **TP1〜TP8**（テストポイントのパッド φ1.5 mm、`TestPoint:TestPoint_Pad_D1.5mm`）、"
+        "回路図に出るが部品ではないもの: **TP1〜TP8**（テストポイントのパッド φ1.5 mm、自作 `TestPoint_Pad_D1.5mm_NoSilk`。部品なし）、"
         "**H1, H2**（M2 取付穴 φ2.2、`MountingHole:MountingHole_2.2mm_M2`）、**SJ1, SJ2**（半田ジャンパーのパッド。部品なし）。",
         "",
         "## 2. 基板の外の部品（組み立てに必要）",
@@ -177,6 +177,6 @@ if __name__ == "__main__":
     if "--bom" in sys.argv:
         bom()
     else:
-        print("BOM: skipped（Stage 4 の PNG の確認後に --bom で作る）")
+        print("BOM: skipped（--bom で作る）")
     upload_zip()
     sys.exit(0 if ok else 1)
