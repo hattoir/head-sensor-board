@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "project_id": "serpens/head-sensor-board",
+  "name": "Floor Watch head sensor board (prototype, Rev A)",
+  "purpose": "Bench board for T6 (ToF cliff detection) and T4 (oblique LED retest). Not a production board.",
+  "repo": {"path": "C:/2026/Serpens_Home AI/serpens/head-sensor-board", "remote": "https://github.com/hattoir/head-sensor-board (private)", "branch": "main", "commit": "see git log (last code/doc commit 63e2481, 2026-10-05)"},
+  "parent": "serpens (separate git; head-sensor-board is excluded via .git/info/exclude)",
+  "goal": "Get the board from 'data ready' to 'ordered, assembled, bring-up measured' without wasting a fab run; hand every physical step to the human as a Human Gate.",
+  "verification_ladder": {
+    "schematic": {"state": "SOFTWARE_VERIFIED", "evidence": ["EV-K-0001"]},
+    "pcb_layout_geometry": {"state": "SOFTWARE_VERIFIED", "evidence": ["EV-K-0001", "EV-K-0002", "EV-K-0011"], "note": "DRC with schematic parity 0/0/0; J1/J2 net/pad/silk match; silk clearances"},
+    "layout_image_review": {"state": "HUMAN_INSPECTED", "evidence": ["EV-K-0004"], "note": "user viewed the 2026-10-02 PNG; later silk edits (0.15 mm, label re-fit) were not re-viewed by the user"},
+    "gerbers": {"state": "SOFTWARE_VERIFIED", "evidence": ["EV-K-0003", "EV-K-0008", "EV-K-0009", "EV-K-0011"], "note": "re-read with an independent library; not user-checked, not previewed in a fab viewer"},
+    "fab_compatibility": {"state": "SOFTWARE_VERIFIED (desk check of published specs)", "evidence": ["EV-K-0005", "EV-K-0006", "EV-K-0010"], "note": "not verified by an order; JLCPCB standard text height fails (high-precision option passes)"},
+    "3d_models": {"state": "IMPLEMENTED", "note": "illustrative boxes for XIAO stack and LED; heights assumed"},
+    "xiao_sense_expansion_clearance": {"state": "CAD_VERIFIED (Seeed drawings only)", "note": "camera / microSD protrusion UNVERIFIED"},
+    "hardware": {"state": "NONE", "HARDWARE_VERIFIED": 0, "evidence": ["EV-K-0013"]}
+  },
+  "artifacts": {
+    "fabrication_zip": "gerbers/head-sensor-board_gerbers.zip",
+    "boardrepo_zip": "C:/2026/Serpens_Home AI/head-sensor-board_upload.zip (user uploads manually; display not confirmed)",
+    "checks": "python tools/run_all_checks.py",
+    "regenerate": "python tools/make_board.py [--reuse-routes] -> tools/check_board.py -> tools/make_outputs.py [--bom] -> tools/make_fabrication.py -> tools/verify_gerbers.py"
+  },
+  "constraints": [
+    "Never order or purchase (human action).",
+    "Never fabricate measurements; expected values in docs/bringup_plan.md are calculations.",
+    "Shared tree ai-shared/ and ai-outbox/ are append-only; do not touch other agents' worktrees.",
+    "After any silk/placement change run tools/check_board.py; after any board change re-run make_fabrication and compare_gerbers --current."
+  ],
+  "open_questions": ["DEC-K-0004 (JLCPCB high-precision text option vs 44x29 + 1.0 mm text)", "ToF module pinout (README table, human)", "M2 hole positions (head mounting undecided)", "socket height, camera/microSD protrusion (HG-K-08)"],
+  "human_gates": ["HG-K-01..09 in docs/bringup_plan.md (also ai-outbox/human-actions/HUMAN-ACTIONS-KICAD-2026-10-05.md)"],
+  "updated": "2026-10-05"
+}

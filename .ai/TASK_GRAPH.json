@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "updated": "2026-10-05",
+  "tasks": [
+    {"id": "T-K-001", "title": "Stage 1-3: spec, schematic (ERC 0), outline and placement", "status": "DONE", "evidence": ["EV-K-0001"]},
+    {"id": "T-K-002", "title": "Stage 4: routing, DRC 0, 3D views", "status": "DONE", "evidence": ["EV-K-0001", "EV-K-0002"]},
+    {"id": "T-K-003", "title": "Manufacturing data (gerbers/, pos, BOM, ZIP) + independent re-read", "status": "DONE", "evidence": ["EV-K-0003"]},
+    {"id": "T-K-004", "title": "Check silk/board against published fab minimums; fix silk stroke (EXP-K-0001)", "status": "DONE", "evidence": ["EV-K-0005", "EV-K-0006", "EV-K-0008", "EV-K-0009", "EV-K-0010"]},
+    {"id": "T-K-005", "title": "Automate: run_all_checks, compare_gerbers (freshness), fab rules JSON", "status": "DONE", "evidence": ["EV-K-0011"]},
+    {"id": "T-K-006", "title": "Human gates for ordering, receipt, assembly, bring-up (HG-K-01..09)", "status": "DONE (documented)", "evidence": ["EV-K-0013"]},
+    {"id": "T-K-007", "title": "User final check of gerbers + choose fab/options + order", "status": "BLOCKED_WAITING_HUMAN", "depends_on": ["T-K-004"], "gate": "HG-K-01", "note": "DEC-K-0004 open"},
+    {"id": "T-K-008", "title": "Fill ToF module pinout / jumper table; I2C + XSHUT bring-up", "status": "BLOCKED_WAITING_HUMAN", "gate": "HG-K-07", "note": "needs the module"},
+    {"id": "T-K-009", "title": "Measure socket height, camera/microSD protrusion", "status": "BLOCKED_WAITING_HUMAN", "gate": "HG-K-08"},
+    {"id": "T-K-010", "title": "EXP-K-0002: 44x29 + 1.0 mm text (JLCPCB standard silk) feasibility", "status": "TODO_CONDITIONAL", "depends_on": ["T-K-007"], "note": "only if the JLCPCB high-precision option is unavailable/costly; changes the approved 44x28 size"},
+    {"id": "T-K-011", "title": "Independent verification of the gerbers in a fab viewer / second reader", "status": "BLOCKED_WAITING_HUMAN", "gate": "HG-K-01"},
+    {"id": "T-K-012", "title": "After bring-up data returns: update spec/README with measured values; revise Rev B if needed", "status": "TODO", "depends_on": ["T-K-007", "T-K-008"]}
+  ]
+}
