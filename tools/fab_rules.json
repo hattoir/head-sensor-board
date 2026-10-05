@@ -1,0 +1,68 @@
+{
+  "_note": "発注先の公開仕様（2 層・標準品）。2026-10-05 に各社の公開ページから取得した値（EV-K-0005 / EV-K-0006）。**注文して確かめた値ではない**。発注の前に、発注ページの最新の値と照合すること。数値は mm。null = 資料に記載なし。",
+  "fetched": "2026-10-05",
+  "fabs": {
+    "jlcpcb": {
+      "name": "JLCPCB",
+      "sources": ["https://jlcpcb.com/capabilities/pcb-capabilities", "https://jlcpcb.com/blog/character-design-specifications"],
+      "track_min": 0.10, "space_min": 0.10,
+      "via_hole_min": 0.15, "via_dia_min": 0.25, "pth_hole_min": 0.15,
+      "pth_annular_min": 0.20,
+      "silk_stroke_min": 0.15, "silk_height_min": 1.0,
+      "silk_hp_stroke_min": 0.10, "silk_hp_height_min": 0.8,
+      "silk_pad_clear_min": 0.15,
+      "mask_web_min": 0.10,
+      "copper_edge_min": 0.2,
+      "thickness": [0.4, 0.6, 0.8, 1.0, 1.2, 1.6, 2.0],
+      "size_min": [3, 3], "size_max": [670, 600],
+      "notes": "標準の文字は線幅 0.15 / 高さ 1.0 以上。注文画面の「高精度の文字」を選ぶと 0.10 / 0.8 まで（追加費用の有無は未確認）。ランドから 0.15 mm 以内の文字は消される。PTH のアニュラリング 0.20 以上（推奨 0.25）がビアにも当たるかは資料からは不明"
+    },
+    "pcbway": {
+      "name": "PCBWay",
+      "sources": ["https://www.pcbway.com/capabilities.html"],
+      "track_min": 0.10, "space_min": 0.10,
+      "via_hole_min": 0.15, "via_dia_min": null, "pth_hole_min": 0.15,
+      "pth_annular_min": 0.15,
+      "silk_stroke_min": 0.15, "silk_height_min": 0.8,
+      "silk_hp_stroke_min": null, "silk_hp_height_min": null,
+      "silk_pad_clear_min": null,
+      "mask_web_min": 0.10,
+      "copper_edge_min": 0.25,
+      "thickness": [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.6, 2.0, 2.4, 2.6, 2.8, 3.0, 3.2],
+      "size_min": [3, 3], "size_max": [600, 1200],
+      "notes": "ソルダーマスクのブリッジ 4 mil（緑）"
+    },
+    "seeed_fusion": {
+      "name": "Seeed Fusion",
+      "sources": ["https://wiki.seeedstudio.com/ja/Service_for_Fusion_PCB/"],
+      "track_min": 0.1016, "space_min": 0.1016,
+      "via_hole_min": 0.2, "via_dia_min": null, "pth_hole_min": 0.2,
+      "pth_annular_min": null,
+      "silk_stroke_min": 0.1016, "silk_height_min": 0.5842,
+      "silk_hp_stroke_min": null, "silk_hp_height_min": null,
+      "silk_pad_clear_min": null,
+      "mask_web_min": 0.10,
+      "copper_edge_min": 0.3,
+      "thickness": [0.6, 0.8, 1.0, 1.2, 1.6, 2.0, 2.5, 3.0],
+      "size_min": null, "size_max": null,
+      "notes": "1 oz の最小パターン幅/間隔 4/4 mil。ソルダーマスクダム: 緑 0.10、その他 0.13 mm 以上"
+    },
+    "elecrow": {
+      "name": "Elecrow",
+      "sources": ["https://www.elecrow.com/pcb-manufacturing.html"],
+      "track_min": 0.1524, "space_min": 0.1524,
+      "track_recommended": 0.2032, "space_recommended": 0.2032,
+      "via_hole_min": 0.3, "via_dia_min": null, "pth_hole_min": 0.3,
+      "pth_annular_min": null,
+      "silk_stroke_min": 0.15, "silk_height_min": 0.8,
+      "silk_hp_stroke_min": null, "silk_hp_height_min": null,
+      "silk_pad_clear_min": null,
+      "pad_space_min": 0.2032,
+      "mask_web_min": null,
+      "copper_edge_min": null,
+      "thickness": null,
+      "size_min": null, "size_max": null,
+      "notes": "最小 6 mil（推奨は 8 mil より大きく）。最小パッド間隔 8 mil。ドリル最小 0.3 mm。銅と縁の距離・マスクのブリッジは資料に記載なし"
+    }
+  }
+}

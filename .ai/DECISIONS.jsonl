@@ -1,0 +1,3 @@
+{"id":"DEC-K-0001","date":"2026-10-01","decision":"Board outline 44x28 mm, 2 layers 1.6 mm, J1/J2 pin1 on the right, GPIO map and LED supply options as in ENTRY-K-0001..0003","by":"User + KiCad Agent","evidence":["EV-K-0001","EV-K-0002"],"status":"ACCEPTED"}
+{"id":"DEC-K-0002","date":"2026-10-02","decision":"Manufacturing data produced into gerbers/ (not ordered). Ordering stays a User action after final check","by":"User","evidence":["EV-K-0003","EV-K-0004"],"status":"ACCEPTED"}
+{"id":"DEC-K-0003","date":"2026-10-05","decision":"PROPOSED: silk stroke 0.12 -> 0.15 mm everywhere (text height stays 0.8 mm); decide KEEP/REVERT after EXP-K-0001","by":"KiCad Agent","evidence":["EV-K-0005","EV-K-0006","EV-K-0007"],"status":"PROPOSED"}

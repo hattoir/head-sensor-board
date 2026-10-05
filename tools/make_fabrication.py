@@ -95,14 +95,15 @@ README = """# gerbers/ — head-sensor-board Rev A の製造データ
 | ビア | 外径 0.6 mm / 穴 0.3 mm、レジストでふさぐ（テンティング） |
 | 穴 | {holes} |
 | レジスト | 開口はランドと同寸（拡張 0）。多くの発注先は自分で拡張をかける。色は任意 |
-| シルク | 文字の最小は高さ 0.8 mm・線幅 0.12 mm。**細めなので、発注先の最小値（線幅・文字高さ）を確かめる**（潰れたら基板を直す） |
+| シルク | 線幅 **0.15 mm**（部品の枠を含む全部）、文字の高さ **0.8 mm**。**JLCPCB の標準は文字の高さ 1.0 mm 以上なので、JLCPCB で発注するときは注文画面の「高精度の文字」（0.8 mm 以上）を選ぶ**（追加費用の有無は未確認）。PCBWay・Elecrow・Seeed Fusion は 0.8 mm・0.15 mm で可。**4 社の公開仕様との照合は `docs/fab_check.md`**（2026-10-05 に公開ページから取った値。注文して確かめたものではない） |
 | 数量 | User が決める |
 
 ## 注意
 
 - **NSSW157T（D1/D2）はリフローかホットエアで付ける部品**（フットプリントの注意書きどおり。樹脂を押さない）。
 - J1/J2 は ToF 小基板へのジャンパー線用のヘッダ。**小基板のピン配置は未確認**（README の対応表を現物で埋める）。信号名のシルクと基板の配線は、回路図と一致することを確認済み（`tools/check_board.py`）。
-- 検証: `python tools/verify_gerbers.py`（KiCad とは別の gerbonara で、zip の中身を読み直して、外形・ドリルの位置と径・銅の抜けを基板と照合する。`pip install gerbonara` が要る）。結果は `docs/spec.md` §7。
+- 検証: `python tools/verify_gerbers.py`（KiCad とは別の gerbonara で、zip の中身を読み直して、外形・ドリルの位置と径・銅の抜けを基板と照合する。`pip install gerbonara` が要る）。`python tools/compare_gerbers.py --current` は、このフォルダが今の基板から作り直したものと同じ図形か（古くなっていないか）を確かめる。`python tools/run_all_checks.py` で全検査をまとめて回せる。結果は `docs/spec.md` §7。
+- 届いてからの手順（外観・導通・初回通電・LED 電流・ToF）は `docs/bringup_plan.md`。
 """
 
 

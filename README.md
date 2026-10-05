@@ -35,7 +35,7 @@
 - **下半分 = L チャンネル、上半分 = R チャンネル**（上面から見て USB-C を左にしたとき）。基板上の L/R はロボットの左右とは限らない（ジャンパー線で左右は自由に決められる）。
 - 配線: **電源（+3V3・+5V）0.5 mm、LED の電流の経路 0.4 mm、信号 0.25 mm**。GND は両面のベタ。ビア 28 個。I2C の長さは SDA 32 mm・SCL 38 mm。
 - **DRC: 違反 0 件**（クリアランス 0.2 mm・縁 0.5 mm・未接続 0・回路図との不一致 0。プロジェクトで「無視」にしていた 4 種の検査も有効にして 0 件）。[docs/drc_report.txt](docs/drc_report.txt)
-- **刻印の検査**（`tools/check_board.py`）: 上面の刻印 137 個が、ランド・ヘッダの樹脂部（2.54 mm 角）・ほかの刻印・XIAO の外形・基板の縁と、**0.1 mm 以上あいている**。J1/J2 の信号名は樹脂部の外に 2 段で置き、奥の段には樹脂部の手前までの引き出し線を引いた。
+- **刻印の検査**（`tools/check_board.py`）: 上面の刻印 137 個が、ランド・ほかの刻印と **0.15 mm 以上**、ヘッダの樹脂部（2.54 mm 角）と 0.05 mm 以上、XIAO の外形・基板の縁と離れている。**シルクの線は全部 0.15 mm 以上、文字の高さは 0.8 mm**（2026-10-05 に 0.12 → 0.15 mm に直した。発注先 4 社の公開仕様との照合 → [docs/fab_check.md](docs/fab_check.md)。**JLCPCB の標準の文字（高さ 1.0 mm 以上）だけは未達で、注文画面の「高精度の文字」を選べば通る**。PCBWay・Elecrow・Seeed Fusion は通る）。J1/J2 の信号名は樹脂部の外に 2 段で置き、奥の段には樹脂部の手前までの引き出し線を引いた。
 - XIAO の下（ソケットの内側）に小さい部品を置き、裏面は GND ベタ。Sense 拡張ボード（カメラ・microSD）は XIAO の上面に載り、基板側の部品とは干渉しない（出っ張りは未確認。[docs/spec.md](docs/spec.md) §6.5）。
 
 | | |
@@ -83,7 +83,8 @@ J1 / J2 の 6 本は、ToF 小基板（VL53L1X、Amazon B083Z316NC）へジャ�
 | 場所 | 中身 |
 |---|---|
 | （直下） | KiCad プロジェクト（`.kicad_pro` / `.kicad_sch` / `.kicad_pcb`、`sym-lib-table` / `fp-lib-table`） |
-| `docs/` | [spec.md](docs/spec.md)（仕様・計算・配置・配線・検証）、[bom.md](docs/bom.md)・`bom.csv`（部品表。**Stage 2 のまま**。BOM の出力時に再生成）、`erc_report*.txt`・`drc_report.txt`、回路図 PDF、配線後の配置図・層ごとの配線・3D ビュー（PNG）、`routes.json`（配線の結果）、`led_budget_output.txt` |
+| `.ai/` | 閉ループの記録（`CURRENT_HANDOFF.md`、`PROJECT_STATE.json`、`TASK_GRAPH.json`、`DECISIONS.jsonl`、`EXPERIMENTS.jsonl`、`EVIDENCE.jsonl`。追記専用の `.jsonl`）。次のセッションはここから再開する |
+| `docs/` | [spec.md](docs/spec.md)（仕様・計算・配置・配線・検証）、[fab_check.md](docs/fab_check.md)（発注先の公開仕様との照合）、[bringup_plan.md](docs/bringup_plan.md)（届いてからの確認手順 = Human Gate）・[bringup_nets.md](docs/bringup_nets.md)（導通の確認表）、[bom.md](docs/bom.md)・`bom.csv`（部品表。**Stage 2 のまま**。BOM の出力時に再生成）、`erc_report*.txt`・`drc_report.txt`、回路図 PDF、配線後の配置図・層ごとの配線・3D ビュー（PNG）、`routes.json`（配線の結果）、`led_budget_output.txt` |
 | `libs/` | 自作のシンボル・フットプリント（**KiCad 標準ライブラリに無いものだけ**。下の「ライブラリの出典」） |
 | `3dmodels/` | 3D ビュー用の**簡易モデル**（`.wrl`。XIAO + Sense 拡張ボード、LED の箱）。`tools/gen_3d.py` で生成。見た目の確認用 |
 | `gerbers/` | **製造データ**（ガーバー、ドリル、位置ファイル、BOM、`head-sensor-board_gerbers.zip`、README）。2026-10-02 に出した。**発注はしていない**（User の最終確認のあと）。中身の説明は [gerbers/README.md](gerbers/README.md) |
@@ -140,6 +141,10 @@ python tools/render_3d.py         # KiCad の 3D ビュー（docs/board_3d_*.png
 python tools/make_outputs.py [--bom]   # ERC・DRC・回路図 PDF・BoardRepo 用 zip（--bom で BOM も）
 python tools/make_fabrication.py  # gerbers/（ガーバー・ドリル・位置ファイル・BOM・ZIP）。**User の確認のあとにだけ**
 python tools/verify_gerbers.py    # 出力した ZIP を別のライブラリ（gerbonara）で読み直して、基板と照合（pip install gerbonara）
+python tools/compare_gerbers.py --current   # gerbers/ が今の基板から作り直した図形と同じか（古くなっていないか）。2 つの ZIP / git の ref の比較にも使える
+"C:/Program Files/KiCad/10.0/bin/python.exe" tools/check_fab_rules.py [--md docs/fab_check.md]   # 発注先 4 社の公開仕様（tools/fab_rules.json）との照合
+python tools/gen_bringup_tables.py   # 導通の確認表 docs/bringup_nets.md（回路図から）
+python tools/run_all_checks.py    # 上の検査を全部まとめて回す（何も書き換えない。発注の前に）
 ```
 KiCad は `C:/Program Files/KiCad/10.0/bin/kicad-cli.exe`（PATH には入っていない）。`tools/pcb_template.kicad_pcb` は空の基板（層・設定だけ。`gen_pcb.py` が毎回ここから作る）。
 自動配線は KiCad の Python に scipy が無いため、基板の形状を `docs/placement_geometry.json` に書き出し → システムの Python で配線 → `docs/routes.json` → KiCad の Python で基板に書き戻す、の 3 段。

@@ -22,7 +22,9 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 KC = "C:/Program Files/KiCad/10.0/bin/kicad-cli.exe"
 ap = argparse.ArgumentParser()
 ap.add_argument("--pcb", default=str(ROOT / "head-sensor-board.kicad_pcb"))
-ap.add_argument("--margin", type=float, default=0.1, help="刻印とほかのものの最小のすきま [mm]")
+ap.add_argument("--margin", type=float, default=0.15, help="刻印と、ほかの部品のランド・ほかの刻印の最小のすきま [mm]（JLCPCB: ランドから 0.15 mm 以内の文字は消される。文字の線の間隔は 0.15 mm より大きく）")
+ap.add_argument("--housing-margin", type=float, default=0.05, help="刻印とヘッダの樹脂部の最小のすきま [mm]")
+ap.add_argument("--xiao-margin", type=float, default=0.225, help="刻印と XIAO の外形（枠線の中心）の最小のすきま [mm]。枠線の太さの半分 0.075 + 0.15")
 args = ap.parse_args()
 
 TOF_NAMES = ["VIN", "GND", "SCL", "SDA", "XSHUT", "GPIO1"]
@@ -99,7 +101,7 @@ for ref in ("J1", "J2"):
 # ------------------------------------------------------------------ 2. 刻印のすきま
 # 刻印の形: 文字 = 実際の筆の跡の枠（KiCad の文字の枠より小さい）、線・四角・円弧 = 線分に分けて太さの半分をふくらませる。
 # 相手: ランド（ほかの部品のもの）、ヘッダの樹脂部（2.54 mm 角）、ほかの刻印、XIAO の外形（上に載るので中の刻印は見えない）、基板の縁。
-print("== 上面の刻印のすきま（最小 %.2f mm）==" % args.margin)
+print("== 上面の刻印のすきま（ランド・刻印 %.2f mm、樹脂部 %.2f mm、XIAO の枠 %.3f mm）==" % (args.margin, args.housing_margin, args.xiao_margin))
 
 
 def seg_points(a, b, step=0.05):
@@ -205,11 +207,11 @@ for it in items:
         if owner == it["owner"]:
             continue
         g = pt_gap_box(it, ob)
-        if g < args.margin:
+        if g < (args.housing_margin if "樹脂部" in oname else args.margin):
             problems.append(f"{it['name']} ↔ {oname}: すきま {g:.2f} mm")
     if u1_outline is not None and it["owner"] != "U1" and not inside_u1(it):
         g = pt_gap_box(it, u1_outline)
-        if g < args.margin:
+        if g < args.xiao_margin:
             problems.append(f"{it['name']} ↔ XIAO の外形: すきま {g:.2f} mm")
     bbs = it["box"] or (min(p[0] for pts, _ in it["prims"] for p in pts), min(p[1] for pts, _ in it["prims"] for p in pts),
                         max(p[0] for pts, _ in it["prims"] for p in pts), max(p[1] for pts, _ in it["prims"] for p in pts))

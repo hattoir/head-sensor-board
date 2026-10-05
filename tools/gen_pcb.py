@@ -56,7 +56,7 @@ def mirror(y):
     return 2 * YC - y
 
 
-JEDGE = 1.45                  # ToF ヘッダのピンの中心から基板の縁までの距離 [mm]
+JEDGE = 1.45                  # ToF ヘッダのピンの中心から基板の縁までの距離 [mm]（ランドの縁から 0.6 mm。配線 routes.json はこの位置で作ってある）
 
 
 def col(i):
@@ -118,22 +118,27 @@ SILK_REF = {}
 TOF_PINS = ["VIN", "GND", "SCL", "SDA", "XSHUT", "GPIO1"]       # J1 / J2 のピン 1〜6（仮。ToF 小基板の実物で確かめる）
 
 
-# 文字の筆の跡の枠（KiCad で測った値。大きさ 0.8 mm・太さ 0.12 mm の英大文字・数字）: 高さ 0.92 mm、中心からの上端 -0.50 / 下端 +0.42
-GLYPH_UP, GLYPH_DN = 0.50, 0.42
+# シルクの線の太さ: 発注先の最小値（JLCPCB の標準 0.15、PCBWay 0.15、Elecrow 0.15、Seeed Fusion 0.10 mm）に合わせて 0.15 mm（EXP-K-0001）。文字の高さ 0.8 mm のまま
+SILK_THK = 0.15
+# 文字の筆の跡の枠（KiCad で測った値。大きさ 0.8 mm・太さ 0.15 mm の英大文字・数字）: 高さ 0.95 mm、中心からの上端 -0.51 / 下端 +0.44
+GLYPH_UP, GLYPH_DN = 0.51, 0.44
 HOUSING = 1.27                # ピンヘッダの樹脂部（2.54 mm 角）の半分
-SILK_GAP = 0.15               # 刻印と刻印・樹脂部・ランドのすきま
-SJ_SILK = 2.25                # 縦並びの半田ジャンパーの中心から、名前の文字の端までの距離（SJ の標準の枠は中心から 約 2.05 mm）
+SILK_GAP = 0.20               # 刻印とランドのすきま（JLCPCB は 0.15 mm 以内の文字を消す）
+HOUSING_GAP = 0.08            # 刻印と樹脂部のすきま（樹脂部は印刷ではないので小さくてよい）
+ROW_GAP = 0.16                # 文字の行どうしのすきま（JLCPCB: 文字の線の間隔 0.15 mm より大きく）
+XIAO_GAP = 0.15               # 刻印と XIAO の枠線（シルク）のすきま
+SJ_SILK = 2.30                # 縦並びの半田ジャンパーの中心から、名前の文字の端までの距離（SJ の標準の枠は中心線が約 2.05 mm、線の太さ 0.15 mm で外縁 2.125 mm）
 
 
 def tof_rows(jy, sgn):
     """ToF ヘッダの信号名 2 段の文字の中心 y（手前 = ピンに近い段 A、奥 = 段 B）。樹脂部の外に置く。sgn = +1: 内側が +y（J2）、-1: 内側が -y（J1）。"""
     edge = jy + sgn * HOUSING                                       # 樹脂部の内側の端
     if sgn > 0:
-        a = edge + SILK_GAP + GLYPH_UP                              # 文字の上端 = 端 + すきま
-        b = a + GLYPH_DN + SILK_GAP + GLYPH_UP
+        a = edge + HOUSING_GAP + GLYPH_UP                           # 文字の上端 = 端 + すきま
+        b = a + GLYPH_DN + ROW_GAP + GLYPH_UP
     else:
-        a = edge - SILK_GAP - GLYPH_DN                              # 文字の下端 = 端 - すきま
-        b = a - GLYPH_UP - SILK_GAP - GLYPH_DN
+        a = edge - HOUSING_GAP - GLYPH_DN                           # 文字の下端 = 端 - すきま
+        b = a - GLYPH_UP - ROW_GAP - GLYPH_DN
     return a, b
 
 
@@ -184,7 +189,7 @@ def silk_lines(pl):
     for j, sgn in (("J1", -1), ("J2", +1)):
         jx, jy = pl[j]["x"], pl[j]["y"]
         ya, yb = tof_rows(jy, sgn)
-        y0 = yb + (GLYPH_DN + 0.2 if sgn < 0 else -GLYPH_UP - 0.2)         # 文字の外側の端 + 0.2
+        y0 = yb + (GLYPH_DN + 0.25 if sgn < 0 else -GLYPH_UP - 0.25)       # 文字の端 + 0.25
         y1 = jy + sgn * (HOUSING + 0.25)                                    # 樹脂部の端の手前
         for k in range(1, 6, 2):
             x = jx - 2.54 * k
@@ -271,7 +276,7 @@ def edge_cuts(board):
     arc((r, H - r), (r, H), (0, H - r))
 
 
-def add_line(board, x1, y1, x2, y2, layer, width=0.12):
+def add_line(board, x1, y1, x2, y2, layer, width=SILK_THK):
     s = pcbnew.PCB_SHAPE(board)
     s.SetShape(pcbnew.SHAPE_T_SEGMENT)
     s.SetLayer(layer)
@@ -286,7 +291,7 @@ def add_text(board, text, x, y, rot, size, layer, just="c", mirrored=False):
     t.SetText(text)
     t.SetLayer(layer)
     t.SetTextSize(VECTOR2I(FromMM(size), FromMM(size)))
-    t.SetTextThickness(FromMM(0.12 if size < 1.2 else 0.2))
+    t.SetTextThickness(FromMM(SILK_THK if size < 1.2 else 0.2))
     t.SetPosition(P(x, y))
     t.SetTextAngleDegrees(rot)
     t.SetHorizJustify({"l": pcbnew.GR_TEXT_H_ALIGN_LEFT, "r": pcbnew.GR_TEXT_H_ALIGN_RIGHT, "c": pcbnew.GR_TEXT_H_ALIGN_CENTER}[just])
@@ -340,7 +345,7 @@ def build():
         # 部品名: 大きめの部品だけ上面の刻印、ほかは Fab 層
         r = fp.Reference()
         r.SetTextSize(VECTOR2I(FromMM(0.8), FromMM(0.8)))
-        r.SetTextThickness(FromMM(0.12))
+        r.SetTextThickness(FromMM(SILK_THK))
         if ref in SILK_REF:
             r.SetLayer(pcbnew.F_SilkS)
             r.SetPosition(P(pos["x"] + SILK_REF[ref][0], pos["y"] + SILK_REF[ref][1]))
@@ -356,6 +361,9 @@ def build():
             key = (ref, pad.GetNumber())
             if key in pad_net:
                 pad.SetNet(netobj[pad_net[key]])
+        for g in fp.GraphicalItems():                              # 部品のシルクの線も、発注先の最小の太さ（SILK_THK）以上にする
+            if g.GetLayer() in (pcbnew.F_SilkS, pcbnew.B_SilkS) and isinstance(g, pcbnew.PCB_SHAPE) and g.GetWidth() < FromMM(SILK_THK):
+                g.SetWidth(FromMM(SILK_THK))
         board.Add(fp)
     edge_cuts(board)
     board.GetDesignSettings().SetAuxOrigin(P(0, H))                  # ドリル・配置ファイルの原点 = 基板の左下（ガーバーもこの原点で出す）
