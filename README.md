@@ -1,17 +1,103 @@
-# head-sensor-board
+# 🧠 Serpens Head Sensor Board
 
-**蛇ロボット（Serpens）Floor Watch の「頭のセンサー基板（試作用）」**の KiCad プロジェクト。
+> Prototype head sensor PCB for the Serpens snake-shaped pet robot.
 
-- 用途: ToF の崖判定（HG-H2 の T6-1〜T6-4）と、斜め LED の追試（T4）。**本番の基板ではない。**
-- 載せるもの: XIAO ESP32S3 Sense（ソケット）、VL53L1X 小基板 ×2（**1×6 ヘッダからジャンパー線で引き出す**）、白色チップ LED NSSW157T ×2（MOSFET + PWM。外付け LED 用ヘッダつき）、I2C プルアップ（未実装可）、テストポイント
-- 電源は既定で XIAO の **3V3 だけ**。LED の電源だけ、半田ジャンパーで **5V** に切り替えられる。電流の計算は [docs/spec.md](docs/spec.md) §4
-- KiCad 10.0.1（回路図 `20260306` / 基板 `20260206`）
-- バージョン管理: GitHub（**プライベート** `hattoir/head-sensor-board`）+ [BoardRepo](https://boardrepo.com)
+Serpensの頭部に搭載するために設計している、
+**試作用センサ基板**です。
 
-> ## ⚠ ToF 小基板のピン配置は**未確認**（ヘッダの並びは仮）
-> VL53L1X 小基板（Amazon B083Z316NC）のピン配置・基板上のプルアップ・I2C アドレスは、販売ページに記載がなく、現物も手元にない。
-> J1/J2 の並び（1 VIN, 2 GND, 3 SCL, 4 SDA, 5 XSHUT, 6 GPIO1）は**仮**（PLACEHOLDER）。**ジャンパー線でつなぐので、並びが違っても基板の作り直しは要らない**（線でつなぎ替える）。そのため、ピン配置が未確認でも基板のガーバー自体は出せる（User 指示 2026-10-01）。
-> **現物が届いたら、下の「ToF 小基板のピン配置と、ジャンパー線の対応表」を埋める。**
+XIAO ESP32S3 Senseを中心に、
+
+- VL53L1X ToFセンサ ×2
+- NSSW157T 白色LED ×2
+- MOSFET PWM駆動
+- I2C
+- Test Points
+- 外付けLEDヘッダ
+
+をまとめています。
+
+主な目的は、
+
+- 床端・崖の検出
+- 頭部周辺の距離センシング
+- LEDによる表現・照明試験
+
+です。
+
+> ⚠️ 現在は設計・製造データ生成まで完了していますが、
+> 実基板はまだ発注・製造していません。
+
+---
+
+## 📊 Current Status
+
+| Area | Status |
+|---|---|
+| Specification | ✅ Complete |
+| Schematic | ✅ ERC 0 |
+| PCB Layout | ✅ Complete |
+| Routing | ✅ Complete |
+| DRC | ✅ 0 violations |
+| 3D Render | ✅ Complete |
+| Gerber / Drill | ✅ Generated |
+| BOM | ✅ Generated |
+| Manufacturing | ⚪ Not ordered |
+| Hardware Verification | ⚪ Not tested |
+
+---
+
+## 🖼 PCB Preview
+
+<!-- ここに今ある3Dレンダリング画像 -->
+
+### Top / Angle View
+
+![Head Sensor Board](docs/board_3d_angle.png)
+
+> ※ 実物写真ではなく、KiCad上の3Dレンダリングです。
+
+---
+
+## ⚙️ Main Components
+
+- XIAO ESP32S3 Sense
+- VL53L1X ×2
+- NSSW157T ×2
+- AO3400A / MOSFET
+- I2C pull-up
+- Test points
+
+---
+
+## 📐 Board
+
+- Size: **44 × 28 mm**
+- Layers: **2**
+- M2 mounting holes ×2
+- GND plane on both layers
+- USB-C access from board edge
+- ToF headers on long edges
+- LED / external LED headers on right side
+
+---
+
+## 🔬 Verification
+
+現在までに、
+
+- ERC: 0 errors
+- DRC: 0 violations
+- Unconnected: 0
+- Schematic / PCB mismatch: 0
+- Silkscreen clearance check
+- Gerber verification
+
+を行っています。
+
+ただし、
+実機に接続しての電源・ToF・LED動作確認は未実施です。
+
+---
 
 > ## ⚠ 電源の運用上の注意（User 指示 2026-10-01。回路図の注記 H にも同じ内容）
 > 1. **5V は試験用の選択肢で、既定は 3V3。** 5V にしたときの合計 **493 mA は USB 2.0 の 500 mA ぎりぎり**（余裕 7 mA）。XIAO の 5V ピンの電流能力は未確認。
